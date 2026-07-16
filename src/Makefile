@@ -17,8 +17,9 @@ endif
 STYLE = file
 
 # --- sources ---
-TETRIS_C = brick_game/tetris/tetris.c
-SNAKE_CC = brick_game/snake/s21_snake_model.cc
+TETRIS_C  = brick_game/tetris/tetris.c
+TETRIS_CC = brick_game/tetris/tetris_model.cc brick_game/tetris/tetromino.cc
+SNAKE_CC  = brick_game/snake/s21_snake_model.cc
 CLI_C    = gui/cli/s21_front.c
 CLI_CC   = gui/cli/main.cc gui/cli/s21_game_view_cli.cc gui/cli/s21_snake_controller.cc
 BIN      = brickgame
@@ -27,14 +28,15 @@ BIN      = brickgame
 FORMAT_FILES = interface.h \
 	brick_game/common/*.h \
 	brick_game/snake/*.cc brick_game/snake/*.h \
-	brick_game/tetris/*.c brick_game/tetris/*.h \
+	brick_game/tetris/*.c brick_game/tetris/*.cc brick_game/tetris/*.h \
 	gui/cli/*.cc gui/cli/*.h gui/cli/*.c \
 	gui/desktop/*.cc gui/desktop/*.h \
 	gui/desktop/controller/*.cc gui/desktop/controller/*.h \
 	tests/*.cc
 
 .PHONY: all cli run install uninstall clean dvi dist \
-        test test_snake test_common gcov_report style format valgrind
+        test test_snake test_common test_tetris gcov_report style format \
+        valgrind
 
 # Default: build only, do NOT run.
 all: cli
@@ -64,7 +66,7 @@ uninstall:
 	rm -rf build/
 
 # --- tests (GoogleTest) ---
-test: test_snake test_common
+test: test_snake test_common test_tetris
 
 # Snake model unit tests. Model is pure logic (no ncurses), so nothing else is linked.
 test_snake:
@@ -75,6 +77,15 @@ test_snake:
 test_common:
 	$(CXX) $(CXXFLAGS) tests/test_common.cc $(LDGTEST) -o test_common
 	./test_common
+
+# Tetris: parity tests — legacy tetris.c (characterization) + s21::TetrisModel.
+# Legacy C code is kept and compiled alongside until parity is confirmed.
+test_tetris:
+	$(CC) $(CFLAGS) -c $(TETRIS_C) -o tetris_legacy.o
+	$(CXX) $(CXXFLAGS) tests/test_tetris.cc $(TETRIS_CC) tetris_legacy.o \
+		$(LDGTEST) -o test_tetris
+	rm -f tetris_legacy.o
+	./test_tetris
 
 # Coverage over the unit-tested translation units only (not the ncurses/Qt front-ends).
 gcov_report:
@@ -108,6 +119,7 @@ dist:
 
 clean:
 	rm -rf *.o *.info *.gcda *.gcno *.gcov report/ build/ dist/
-	rm -f $(BIN) main tetris snake test test_snake test_common testing gcov_test
+	rm -f $(BIN) main tetris snake test test_snake test_common test_tetris \
+		testing gcov_test
 	rm -f *.tar.gz
 	rm -rf *.dSYM
