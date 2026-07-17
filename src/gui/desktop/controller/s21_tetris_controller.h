@@ -1,4 +1,4 @@
-#ifndef S21_TETRIS_CONTROLLER_H
+﻿#ifndef S21_TETRIS_CONTROLLER_H
 #define s21_TETRIS_CONTROLLER_H
 
 #include <QKeyEvent>
@@ -10,7 +10,7 @@
 #include "../../interface.h"
 #include "../s21_help_field.h"
 
-extern "C" {  // подключаем файл из С языка
+extern "C" {  // РїРѕРґРєР»СЋС‡Р°РµРј С„Р°Р№Р» РёР· РЎ СЏР·С‹РєР°
 #include "../../../brick_game/tetris/tetris.h"
 }
 
@@ -22,14 +22,14 @@ class TetrisController;
 class TetrisController : public QWidget {
   Q_OBJECT
  public:
-  TetrisController(GameModel* m_gameModel);
+  TetrisController(SnakeModel* m_SnakeModel);
   ~TetrisController() = default;
   void printField(int** field, int x, int y, int w, int h);
   void increaseLevel();
 
  protected:
   void paintEvent(QPaintEvent* e) override;
-  void keyPressEvent(QKeyEvent* e) override;  // вместо userKeyPress
+  void keyPressEvent(QKeyEvent* e) override;  // РІРјРµСЃС‚Рѕ userKeyPress
 
  private:
   int m_tetrisItemSize;
@@ -40,7 +40,7 @@ class TetrisController : public QWidget {
   int prev_score = 0;
   bool spawn = false;
   bool work = true;
-  GameModel* m_gameModel_;
+  SnakeModel* m_SnakeModel_;
   int currentFig;
 
  public slots:

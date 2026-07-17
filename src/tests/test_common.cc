@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 
+#include "../brick_game/common/field_buffer.h"
 #include "../brick_game/common/fsm.h"
 #include "../brick_game/common/game_base.h"
 #include "../brick_game/common/observer.h"
@@ -129,6 +130,28 @@ TEST(ObserverTest, AllObserversNotified) {
   subject.Notify(5);
   EXPECT_EQ(first, 5);
   EXPECT_EQ(second, 5);
+}
+
+// --- FieldBuffer ---
+
+TEST(FieldBufferTest, StartsZeroed) {
+  s21::FieldBuffer buffer;
+  ASSERT_NE(buffer.data(), nullptr);
+  int total = 0;
+  for (int r = 0; r < s21::FieldBuffer::kHeight; ++r) {
+    for (int c = 0; c < s21::FieldBuffer::kWidth; ++c) {
+      total += buffer.data()[r][c];
+    }
+  }
+  EXPECT_EQ(total, 0);
+}
+
+TEST(FieldBufferTest, WritableAndClearable) {
+  s21::FieldBuffer buffer;
+  buffer.data()[5][7] = 3;
+  EXPECT_EQ(buffer.data()[5][7], 3);
+  buffer.Clear();
+  EXPECT_EQ(buffer.data()[5][7], 0);
 }
 
 // --- IGame (Strategy-контракт) ---

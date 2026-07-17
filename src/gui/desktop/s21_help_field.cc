@@ -1,15 +1,16 @@
-#include "s21_help_field.h"
+﻿#include "s21_help_field.h"
 
 #include "../../interface.h"
 
-s21::HelpField::HelpField(GameModel* m_gameModel) : m_gameModel_(m_gameModel) {
-  m_gameName = m_gameModel_->game_name;
+s21::HelpField::HelpField(SnakeModel* m_SnakeModel)
+    : m_SnakeModel_(m_SnakeModel) {
+  m_gameName = m_SnakeModel_->game_name;
   setFixedSize(CELL_SIZE / 2 * FIELD_WIDTH,
                CELL_SIZE * FIELD_HEIGHT + 40);  // CELL_SIZE
 
   m_moveSnakeTimer = new QTimer();
   connect(m_moveSnakeTimer, &QTimer::timeout, this, &HelpField::MoveSnakeSlot);
-  m_moveSnakeTimer->start(50);  // скорость змейки
+  m_moveSnakeTimer->start(50);  // СЃРєРѕСЂРѕСЃС‚СЊ Р·РјРµР№РєРё
 }
 
 void s21::HelpField::loadHighScore(int& high_score) {
@@ -22,7 +23,7 @@ void s21::HelpField::loadHighScore(int& high_score) {
     fscanf(file, "%d", &high_score);
     fclose(file);
 
-    m_gameModel_->setHighScore(high_score);
+    m_SnakeModel_->setHighScore(high_score);
   }
 }
 
@@ -46,21 +47,22 @@ void s21::HelpField::paintEvent(QPaintEvent* e) {
   painter.setFont(QFont("Arial", 10, 700));
   loadHighScore(game_info.high_score);
   game_info.score = 0;
-  int fig = m_gameModel_->getFig();
+  int fig = m_SnakeModel_->getFig();
 
-  painter.drawText(QRect(0, height() / 2 - 140, width(), 20), Qt::AlignCenter,
-                   "SCORE: " + QString::number(m_gameModel_->getEatenApples()));
+  painter.drawText(
+      QRect(0, height() / 2 - 140, width(), 20), Qt::AlignCenter,
+      "SCORE: " + QString::number(m_SnakeModel_->getEatenApples()));
   painter.drawText(QRect(0, height() / 2 - 90, width(), 20), Qt::AlignCenter,
                    "RECORD: " + QString::number(game_info.high_score));
   painter.drawText(QRect(0, height() / 2 - 40, width(), 20), Qt::AlignCenter,
-                   "LEVEL: " + QString::number(m_gameModel_->getLevel()));
+                   "LEVEL: " + QString::number(m_SnakeModel_->getLevel()));
   painter.drawText(QRect(0, height() / 2 + 10, width(), 20), Qt::AlignCenter,
-                   "SPEED: " + QString::number(m_gameModel_->getLevel()));
+                   "SPEED: " + QString::number(m_SnakeModel_->getLevel()));
   painter.drawText(QRect(0, height() / 2 + 60, width(), 20), Qt::AlignCenter,
                    "PAUSE: SPACE");
   painter.drawText(QRect(0, height() / 2 + 110, width(), 20), Qt::AlignCenter,
                    "NEXT FIGURE");
-  m_gameModel_->getFig();
+  m_SnakeModel_->getFig();
   switch (fig) {
     case 0:
       painter.setBrush(Qt::white);
@@ -145,8 +147,8 @@ void s21::HelpField::paintEvent(QPaintEvent* e) {
 }
 
 void s21::HelpField::MoveSnakeSlot() {
-  if (m_gameModel_->getEatenApples() > m_gameModel_->getHighScore()) {
-    saveHighScore(m_gameModel_->getEatenApples());
+  if (m_SnakeModel_->getEatenApples() > m_SnakeModel_->getHighScore()) {
+    saveHighScore(m_SnakeModel_->getEatenApples());
   }
   repaint();
 }

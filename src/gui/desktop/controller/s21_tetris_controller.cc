@@ -1,13 +1,13 @@
-#include "s21_tetris_controller.h"
+﻿#include "s21_tetris_controller.h"
 
-s21::TetrisController::TetrisController(GameModel* m_gameModel)
-    : m_gameModel_(m_gameModel) {
+s21::TetrisController::TetrisController(SnakeModel* m_SnakeModel)
+    : m_SnakeModel_(m_SnakeModel) {
   setFixedSize(CELL_SIZE * FIELD_WIDTH + 40, CELL_SIZE * FIELD_HEIGHT + 40);
-  setFocusPolicy(Qt::StrongFocus);  // подключение кнопок
+  setFocusPolicy(Qt::StrongFocus);  // РїРѕРґРєР»СЋС‡РµРЅРёРµ РєРЅРѕРїРѕРє
   m_tetrisItemSize = CELL_SIZE;
   m_tetrino = new Tetrino();
   m_gameInfo = new GameInfo_t();
-  // выделение памяти для полей
+  // РІС‹РґРµР»РµРЅРёРµ РїР°РјСЏС‚Рё РґР»СЏ РїРѕР»РµРёМ†
   m_gameInfo->field = new int*[20];
   for (int i = 0; i < 20; i++) {
     m_gameInfo->field[i] = new int[10];
@@ -31,7 +31,8 @@ s21::TetrisController::TetrisController(GameModel* m_gameModel)
   m_moveTetrisTimer = new QTimer();
   connect(m_moveTetrisTimer, &QTimer::timeout, this,
           &TetrisController::MoveTetrisSlot);
-  m_moveTetrisTimer->start(m_gameInfo->speed);  // скорость падения фигуры
+  m_moveTetrisTimer->start(
+      m_gameInfo->speed);  // СЃРєРѕСЂРѕСЃС‚СЊ РїР°РґРµРЅРёСЏ С„РёРіСѓСЂС‹
 }
 
 void s21::TetrisController::paintEvent(QPaintEvent* e) {
@@ -39,7 +40,7 @@ void s21::TetrisController::paintEvent(QPaintEvent* e) {
   QPainter painter;
   painter.begin(this);
 
-  // блок для вывода текста проигрыша
+  // Р±Р»РѕРє РґР»СЏ РІС‹РІРѕРґР° С‚РµРєСЃС‚Р° РїСЂРѕРёРіСЂС‹С€Р°
   if (m_user_action == Terminate) {
     QFont font("Arial", 20, 250);
     QFontMetrics fontMetrics(font);
@@ -57,7 +58,7 @@ void s21::TetrisController::paintEvent(QPaintEvent* e) {
   painter.setOpacity(0.5);
   painter.drawRect(0, 0, width() - 40, height() - 40);
   painter.setOpacity(1);
-  // рисую тетрино
+  // СЂРёСЃСѓСЋ С‚РµС‚СЂРёРЅРѕ
   painter.setBrush(Qt::red);
   printField(m_gameInfo->field, 0, 0, FIELD_WIDTH, FIELD_HEIGHT);
   painter.end();
@@ -104,8 +105,8 @@ void s21::TetrisController::MoveTetrisSlot() {
       m_moveTetrisTimer->stop();
       return;
     }
-    m_gameModel_->setFig(rand() % 7);
-    currentFig = m_gameModel_->getFig();
+    m_SnakeModel_->setFig(rand() % 7);
+    currentFig = m_SnakeModel_->getFig();
     spawn = true;
   }
   spawn = ::userInputTet(m_gameInfo, m_user_action, m_tetrino);
@@ -116,10 +117,10 @@ void s21::TetrisController::MoveTetrisSlot() {
   m_user_action = Start;
   repaint();
 
-  m_gameModel_->setScore(m_gameInfo->score);
-  m_gameModel_->setLevel(m_gameInfo->level);
-  m_gameModel_->setHighScore(m_gameInfo->high_score);
-  m_gameModel_->setSpeed(m_gameInfo->speed);
+  m_SnakeModel_->setScore(m_gameInfo->score);
+  m_SnakeModel_->setLevel(m_gameInfo->level);
+  m_SnakeModel_->setHighScore(m_gameInfo->high_score);
+  m_SnakeModel_->setSpeed(m_gameInfo->speed);
 }
 
 void s21::TetrisController::printField(int** field, int x, int y, int w,

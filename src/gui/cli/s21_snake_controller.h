@@ -12,7 +12,7 @@ class GameController {
   void gameOver();
 
  private:
-  s21::GameModel model;
+  s21::SnakeModel model;
   GameView view;
   UserAction_t user_action;
   int dx = 1;

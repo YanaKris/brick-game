@@ -1,15 +1,16 @@
-#include "s21_snake_controller.h"
+﻿#include "s21_snake_controller.h"
 
-s21::SnakeController::SnakeController(GameModel* m_gameModel)
-    : m_gameModel_(m_gameModel) {
+s21::SnakeController::SnakeController(SnakeModel* m_SnakeModel)
+    : m_SnakeModel_(m_SnakeModel) {
   setFixedSize(CELL_SIZE * FIELD_WIDTH + 40, CELL_SIZE * FIELD_HEIGHT + 40);
-  setFocusPolicy(Qt::StrongFocus);  // подключение кнопок
+  setFocusPolicy(Qt::StrongFocus);  // РїРѕРґРєР»СЋС‡РµРЅРёРµ РєРЅРѕРїРѕРє
 
   m_snakeItemSize = CELL_SIZE;
   m_moveSnakeTimer = new QTimer();
   connect(m_moveSnakeTimer, &QTimer::timeout, this,
           &SnakeController::MoveSnakeSlot);
-  m_moveSnakeTimer->start(m_gameModel_->getSpeed());  // скорость змейки
+  m_moveSnakeTimer->start(
+      m_SnakeModel_->getSpeed());  // СЃРєРѕСЂРѕСЃС‚СЊ Р·РјРµР№РєРё
 }
 
 void s21::SnakeController::paintEvent(QPaintEvent* e) {
@@ -39,23 +40,23 @@ void s21::SnakeController::paintEvent(QPaintEvent* e) {
   painter.drawRect(20, 20, width() - 40, height() - 20);
 
   painter.setOpacity(1);
-  // рисую голову
+  // СЂРёСЃСѓСЋ РіРѕР»РѕРІСѓ
   painter.setBrush(Qt::red);
-  painter.drawEllipse(m_gameModel_->getHead().x * m_snakeItemSize,
-                      m_gameModel_->getHead().y * m_snakeItemSize,
+  painter.drawEllipse(m_SnakeModel_->getHead().x * m_snakeItemSize,
+                      m_SnakeModel_->getHead().y * m_snakeItemSize,
                       m_snakeItemSize, m_snakeItemSize);
-  // рисую хвост
+  // СЂРёСЃСѓСЋ С…РІРѕСЃС‚
   painter.setBrush(Qt::cyan);
-  for (size_t i = 0; i < m_gameModel_->getTail().size(); i++) {
-    painter.drawEllipse(m_gameModel_->getTail()[i].x * m_snakeItemSize,
-                        m_gameModel_->getTail()[i].y * m_snakeItemSize,
+  for (size_t i = 0; i < m_SnakeModel_->getTail().size(); i++) {
+    painter.drawEllipse(m_SnakeModel_->getTail()[i].x * m_snakeItemSize,
+                        m_SnakeModel_->getTail()[i].y * m_snakeItemSize,
                         m_snakeItemSize, m_snakeItemSize);
   }
 
-  // рисую яблоко
+  // СЂРёСЃСѓСЋ СЏР±Р»РѕРєРѕ
   painter.setBrush(Qt::red);
-  painter.drawEllipse(m_gameModel_->getApple().x * m_snakeItemSize,
-                      m_gameModel_->getApple().y * m_snakeItemSize,
+  painter.drawEllipse(m_SnakeModel_->getApple().x * m_snakeItemSize,
+                      m_SnakeModel_->getApple().y * m_snakeItemSize,
                       m_snakeItemSize, m_snakeItemSize);
 
   painter.end();
@@ -83,28 +84,28 @@ void s21::SnakeController::MoveSnakeSlot() {
   switch (user_action) {
     case Left:
       if (dx != 1) {
-        // Обработка нажатия клавиши "Влево"
+        // РћР±СЂР°Р±РѕС‚РєР° РЅР°Р¶Р°С‚РёСЏ РєР»Р°РІРёС€Рё "Р’Р»РµРІРѕ"
         dx = -1;
         dy = 0;
       }
       break;
     case Right:
       if (dx != -1) {
-        // Обработка нажатия клавиши "Вправо"
+        // РћР±СЂР°Р±РѕС‚РєР° РЅР°Р¶Р°С‚РёСЏ РєР»Р°РІРёС€Рё "Р’РїСЂР°РІРѕ"
         dx = 1;
         dy = 0;
       }
       break;
     case Up:
       if (dy != 1) {
-        // Обработка нажатия клавиши "Вверх"
+        // РћР±СЂР°Р±РѕС‚РєР° РЅР°Р¶Р°С‚РёСЏ РєР»Р°РІРёС€Рё "Р’РІРµСЂС…"
         dx = 0;
         dy = -1;
       }
       break;
     case Down:
       if (dy != -1) {
-        // Обработка нажатия клавиши "Вниз"
+        // РћР±СЂР°Р±РѕС‚РєР° РЅР°Р¶Р°С‚РёСЏ РєР»Р°РІРёС€Рё "Р’РЅРёР·"
         dx = 0;
         dy = 1;
       }
@@ -116,17 +117,17 @@ void s21::SnakeController::MoveSnakeSlot() {
       break;
   }
 
-  if (m_gameModel_->moveSnake(dx, dy)) {
+  if (m_SnakeModel_->moveSnake(dx, dy)) {
   } else {
     user_action = Action;
   }
 
-  if (m_gameModel_->getEatenApples() % 5 == 0 &&
-      m_gameModel_->getEatenApples() != prev_score) {
-    m_gameModel_->increaseLevel();
-    prev_score = m_gameModel_->getEatenApples();
+  if (m_SnakeModel_->getEatenApples() % 5 == 0 &&
+      m_SnakeModel_->getEatenApples() != prev_score) {
+    m_SnakeModel_->increaseLevel();
+    prev_score = m_SnakeModel_->getEatenApples();
   }
 
-  m_moveSnakeTimer->start(m_gameModel_->getSpeed());
+  m_moveSnakeTimer->start(m_SnakeModel_->getSpeed());
   repaint();
 }

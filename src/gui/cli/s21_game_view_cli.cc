@@ -1,9 +1,9 @@
-#include "s21_game_view_cli.h"
+﻿#include "s21_game_view_cli.h"
 
 #include <vector>
 using namespace std;
 
-void GameView::showMap(const s21::GameModel& model) {
+void GameView::showMap(const s21::SnakeModel& model) {
   clear();
   mvprintw(1, 15, "SCORE");
   move(2, 17);
@@ -22,16 +22,14 @@ void GameView::showMap(const s21::GameModel& model) {
   mvprintw(13, 14, "|SPACE|");
   mvprintw(14, 15, "-----");
 
-  // mvprintw(25, 1, model.printDebugInfo().c_str());
-
-  // Рисуем границы
+  // Р РёСЃСѓРµРј РіСЂР°РЅРёС†С‹
   drawBorders();
 
-  // Рисуем яблоко
+  // Р РёСЃСѓРµРј СЏР±Р»РѕРєРѕ
   move(model.getApple().y, model.getApple().x);
   printw("@");
 
-  // Рисуем змейку
+  // Р РёСЃСѓРµРј Р·РјРµР№РєСѓ
   for (const auto& segment : model.getTail()) {
     move(segment.y, segment.x);
     printw("#");
@@ -58,7 +56,7 @@ void GameView::drawBorders() {
     mvaddch(i + 1, 0, ACS_VLINE);
     mvaddch(i + 1, FIELD_WIDTH + 1, ACS_VLINE);
   }
-  // поле инфы
+  // РїРѕР»Рµ РёРЅС„С‹
   mvaddch(0, 13, ACS_ULCORNER);
   mvaddch(0, FIELD_WIDTH + 11, ACS_URCORNER);
   mvaddch(FIELD_HEIGHT + 1, 13, ACS_LLCORNER);
