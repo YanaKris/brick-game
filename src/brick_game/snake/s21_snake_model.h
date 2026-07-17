@@ -1,7 +1,8 @@
-#ifndef S21_GAME_MODEL_H
-#define S21_GAME_MODEL_H
+#ifndef S21_BRICK_GAME_SNAKE_S21_SNAKE_MODEL_H_
+#define S21_BRICK_GAME_SNAKE_S21_SNAKE_MODEL_H_
 
 #include <chrono>
+#include <cstddef>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -17,9 +18,22 @@ class Snake {
   Snake(int startX, int startY) : x(startX), y(startY) {}
 };
 
-class GameModel {
+class SnakeModel {
  public:
-  GameModel();
+  SnakeModel();
+  // Восстановление произвольного состояния (DI для фасада и тестов).
+  SnakeModel(Snake head, std::vector<Snake> tail, Snake apple);
+
+  // Растеризация в поле 20×10 (0-based): голова/хвост = 1, яблоко = 2.
+  void Rasterize(int** field) const;
+
+  // Бонусная механика: +1 уровень за каждые 5 яблок, потолок 10.
+  static int LevelFor(int eaten_apples);
+  // Скорость тика: 300 - 50 * уровень, но не ниже 50 (не уходит в минус).
+  static int SpeedFor(int level);
+  // Победа при длине змейки (голова + хвост) 200.
+  static bool IsWinLength(std::size_t length);
+
   void initSnake();
   void setGameInfo(GameInfo_t* game_info);
   bool moveSnake(int dx, int dy);
@@ -42,7 +56,6 @@ class GameModel {
   void setFig(int fig);
   int getFig();
 
-  std::string printDebugInfo() const;
   std::string game_name;
 
  private:
@@ -58,4 +71,4 @@ class GameModel {
 
 }  // namespace s21
 
-#endif  // S21_GAME_MODEL_H
+#endif  // S21_BRICK_GAME_SNAKE_S21_SNAKE_MODEL_H_

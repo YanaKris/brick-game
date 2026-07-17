@@ -1,4 +1,4 @@
-#ifndef GAME_H
+﻿#ifndef GAME_H
 #define GAME_H
 
 #include <QKeyEvent>
@@ -16,7 +16,7 @@ class SnakeController;
 class SnakeController : public QWidget {
   Q_OBJECT
  public:
-  SnakeController(GameModel* m_gameModel);
+  SnakeController(SnakeModel* m_SnakeModel);
   ~SnakeController() = default;
 
  protected:
@@ -26,7 +26,7 @@ class SnakeController : public QWidget {
  private:
   int m_snakeItemSize;
   QTimer* m_moveSnakeTimer;
-  GameModel* m_gameModel_;
+  SnakeModel* m_SnakeModel_;
   UserAction_t user_action;
   int dx = 1;
   int dy = 0;

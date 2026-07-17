@@ -1,4 +1,4 @@
-#include "view.h"
+﻿#include "view.h"
 
 #include "ui_view.h"
 
@@ -11,11 +11,11 @@ s21::View::~View() { delete ui; }
 void s21::View::on_pushButton_clicked() {
   setFixedSize(CELL_SIZE * FIELD_WIDTH * 2 + 60, CELL_SIZE * FIELD_HEIGHT + 53);
 
-  m_gameModel = new GameModel();
-  m_gameModel->game_name = "TETRIS";
+  m_SnakeModel = new SnakeModel();
+  m_SnakeModel->game_name = "TETRIS";
 
-  m_TetrisController = new TetrisController(m_gameModel);
-  m_helpField = new HelpField(m_gameModel);
+  m_TetrisController = new TetrisController(m_SnakeModel);
+  m_helpField = new HelpField(m_SnakeModel);
 
   m_centralWidget = new QWidget();
   m_gridLayout = new QGridLayout();
@@ -30,14 +30,14 @@ void s21::View::on_pushButton_clicked() {
 }
 
 void s21::View::on_pushButton_2_clicked() {
-  // размер основного окна
+  // СЂР°Р·РјРµСЂ РѕСЃРЅРѕРІРЅРѕРіРѕ РѕРєРЅР°
   setFixedSize(CELL_SIZE * FIELD_WIDTH * 2 + 60, CELL_SIZE * FIELD_HEIGHT + 53);
 
-  m_gameModel = new GameModel();
-  m_gameModel->game_name = "SNAKE";
+  m_SnakeModel = new SnakeModel();
+  m_SnakeModel->game_name = "SNAKE";
 
-  m_SnakeController = new SnakeController(m_gameModel);
-  m_helpField = new HelpField(m_gameModel);
+  m_SnakeController = new SnakeController(m_SnakeModel);
+  m_helpField = new HelpField(m_SnakeModel);
 
   m_centralWidget = new QWidget();
   m_gridLayout = new QGridLayout();

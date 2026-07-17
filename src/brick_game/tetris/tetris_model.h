@@ -26,6 +26,7 @@ class TetrisModel {
   // Спавн фигуры вверху поля (позиция row=-1/col=3, как в legacy).
   // false => фигура не помещается (game over); поле не меняется.
   bool Spawn(TetrominoType type);
+  bool Spawn(std::unique_ptr<Tetromino> figure);
   bool SpawnRandom();
 
   // false => фигура легла (остаётся в поле, управление снимается).
@@ -49,7 +50,6 @@ class TetrisModel {
   bool has_active_figure() const { return current_ != nullptr; }
 
  private:
-  bool SpawnFigure(std::unique_ptr<Tetromino> figure);
   bool Fits(const Tetromino::Matrix& matrix, int row, int col) const;
   void Draw(const Tetromino::Matrix& matrix, int row, int col, int value);
   bool TryMove(int d_row, int d_col);

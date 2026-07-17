@@ -18,8 +18,9 @@ STYLE = file
 
 # --- sources ---
 TETRIS_C  = brick_game/tetris/tetris.c
-TETRIS_CC = brick_game/tetris/tetris_model.cc brick_game/tetris/tetromino.cc
-SNAKE_CC  = brick_game/snake/s21_snake_model.cc
+TETRIS_CC = brick_game/tetris/tetris_model.cc brick_game/tetris/tetromino.cc \
+	brick_game/tetris/tetris_game.cc
+SNAKE_CC  = brick_game/snake/s21_snake_model.cc brick_game/snake/snake_game.cc
 CLI_C    = gui/cli/s21_front.c
 CLI_CC   = gui/cli/main.cc gui/cli/s21_game_view_cli.cc gui/cli/s21_snake_controller.cc
 BIN      = brickgame
@@ -68,9 +69,10 @@ uninstall:
 # --- tests (GoogleTest) ---
 test: test_snake test_common test_tetris
 
-# Snake model unit tests. Model is pure logic (no ncurses), so nothing else is linked.
+# Snake tests: model (pure logic) + SnakeGame facade/FSM. No ncurses linked.
 test_snake:
-	$(CXX) $(CXXFLAGS) tests/tests.cc $(SNAKE_CC) $(LDGTEST) -o test_snake
+	$(CXX) $(CXXFLAGS) tests/tests.cc tests/test_snake_fsm.cc $(SNAKE_CC) \
+		$(LDGTEST) -o test_snake
 	./test_snake
 
 # Common-layer unit tests (FSM, Observer, IGame). Header-only, no ncurses.
@@ -89,11 +91,16 @@ test_tetris:
 
 # Coverage over the unit-tested translation units only (not the ncurses/Qt front-ends).
 gcov_report:
-	$(CXX) $(CXXFLAGS) $(GCOV_FLAGS) tests/tests.cc $(SNAKE_CC) $(LDGTEST) -o gcov_test
+	$(CC) $(CFLAGS) $(GCOV_FLAGS) -c $(TETRIS_C) -o tetris_legacy.o
+	$(CXX) $(CXXFLAGS) $(GCOV_FLAGS) tests/tests.cc tests/test_snake_fsm.cc \
+		tests/test_common.cc tests/test_tetris.cc $(SNAKE_CC) $(TETRIS_CC) \
+		tetris_legacy.o $(LDGTEST) -o gcov_test
 	./gcov_test
-	lcov --capture --directory . --output-file coverage.info --no-external
-	lcov --remove coverage.info '/usr/*' '*/tests/*' '*gtest*' --output-file coverage.info
-	genhtml coverage.info --output-directory report
+	lcov --capture --directory . --output-file coverage.info --no-external \
+		--ignore-errors inconsistent,mismatch
+	lcov --remove coverage.info '/usr/*' '*/tests/*' '*gtest*' \
+		--output-file coverage.info --ignore-errors inconsistent,unused
+	genhtml coverage.info --output-directory report --ignore-errors inconsistent
 	@echo "Coverage report generated: report/index.html"
 
 valgrind: test_snake

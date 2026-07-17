@@ -1,4 +1,4 @@
-#ifndef HELPFIELD_H
+﻿#ifndef HELPFIELD_H
 #define HELPFIELD_H
 
 #include <QPainter>
@@ -11,7 +11,7 @@ namespace s21 {
 class HelpField : public QWidget {
   Q_OBJECT
  public:
-  HelpField(GameModel* m_gameModel);
+  HelpField(SnakeModel* m_SnakeModel);
   // HelpField(TetrisController *tetris_controller);
   void loadHighScore(int& high_score);
   void saveHighScore(int high_score);
@@ -21,8 +21,9 @@ class HelpField : public QWidget {
 
  private:
   GameInfo_t game_info;
-  std::string m_gameName;  // член класса для хранения названия игры
-  GameModel* m_gameModel_;
+  std::string m_gameName;  // С‡Р»РµРЅ РєР»Р°СЃСЃР° РґР»СЏ С…СЂР°РЅРµРЅРёСЏ
+                           // РЅР°Р·РІР°РЅРёСЏ РёРіСЂС‹
+  SnakeModel* m_SnakeModel_;
   // TetrisController *m_tetris_controller_;
   QTimer* m_moveSnakeTimer;
   int prev_score = 0;

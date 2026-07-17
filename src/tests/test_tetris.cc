@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "../brick_game/tetris/tetris_game.h"
 #include "../brick_game/tetris/tetris_model.h"
 #include "../brick_game/tetris/tetromino.h"
 
@@ -430,6 +431,149 @@ TEST(TetrisModelTest, LevelForCapsAtTen) {
   EXPECT_EQ(TetrisModel::LevelFor(600), 1);
   EXPECT_EQ(TetrisModel::LevelFor(1200), 2);
   EXPECT_EQ(TetrisModel::LevelFor(6601), 10);  // 11 -> потолок 10
+}
+
+TEST(TetrisModelTest, SpawnAcceptsInjectedFigure) {
+  TetrisModel model;
+  EXPECT_TRUE(model.Spawn(TetrominoFactory::Create(TetrominoType::kBar)));
+  for (int c = 3; c <= 6; ++c) EXPECT_EQ(model.field()[0][c], 1);
+}
+
+// === s21::TetrisGame (фасад IGame над FSM) ===
+
+using s21::GameState;
+using s21::TetrisGame;
+
+// Детерминированный генератор: всегда BAR.
+TetrisGame::FigureGenerator BarGenerator() {
+  return [] { return TetrominoFactory::Create(TetrominoType::kBar); };
+}
+
+int CountInfoCells(const GameInfo_t& info) {
+  int count = 0;
+  for (int r = 0; r < kH; ++r) {
+    for (int c = 0; c < kW; ++c) count += info.field[r][c] != 0 ? 1 : 0;
+  }
+  return count;
+}
+
+TEST(TetrisGameTest, StartsInStartState) {
+  TetrisGame game;
+  EXPECT_EQ(game.state(), GameState::kStart);
+  EXPECT_FALSE(game.finished());
+}
+
+TEST(TetrisGameTest, StartMovesToSpawnState) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  EXPECT_EQ(game.state(), GameState::kSpawn);
+}
+
+TEST(TetrisGameTest, FirstTickSpawnsFigure) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  GameInfo_t info = game.updateCurrentState();
+  EXPECT_EQ(game.state(), GameState::kMoving);
+  for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[0][c], 1);
+  EXPECT_EQ(CountInfoCells(info), 4);
+}
+
+TEST(TetrisGameTest, TickDropsFigureOneRow) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  game.updateCurrentState();                    // спавн
+  GameInfo_t info = game.updateCurrentState();  // падение
+  for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[1][c], 1);
+  EXPECT_EQ(CountInfoCells(info), 4);
+}
+
+TEST(TetrisGameTest, LeftShiftsFigure) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  game.updateCurrentState();  // спавн: колонки 3..6
+  game.userInput(Left, false);
+  GameInfo_t info = game.updateCurrentState();  // + падение на строку 1
+  for (int c = 2; c <= 5; ++c) EXPECT_EQ(info.field[1][c], 1);
+}
+
+TEST(TetrisGameTest, RightShiftsFigure) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  game.updateCurrentState();
+  game.userInput(Right, false);
+  GameInfo_t info = game.updateCurrentState();
+  for (int c = 4; c <= 7; ++c) EXPECT_EQ(info.field[1][c], 1);
+}
+
+TEST(TetrisGameTest, ActionRotatesFigure) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  game.updateCurrentState();      // спавн (row = -1)
+  game.updateCurrentState();      // row = 0: место для поворота есть
+  game.userInput(Action, false);  // BAR -> вертикаль, колонка 5
+  GameInfo_t info = game.updateCurrentState();  // + падение
+  for (int r = 1; r <= 4; ++r) EXPECT_EQ(info.field[r][5], 1);
+  EXPECT_EQ(CountInfoCells(info), 4);
+}
+
+TEST(TetrisGameTest, DownDropsImmediately) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  game.updateCurrentState();                    // спавн: строка 0
+  game.userInput(Down, false);                  // мгновенно вниз: строка 1
+  GameInfo_t info = game.updateCurrentState();  // тик: строка 2
+  for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[2][c], 1);
+}
+
+TEST(TetrisGameTest, PauseStopsFalling) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  game.updateCurrentState();  // спавн: строка 0
+  game.userInput(Pause, false);
+  EXPECT_EQ(game.state(), GameState::kPause);
+  GameInfo_t info = game.updateCurrentState();
+  EXPECT_EQ(info.pause, 1);
+  for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[0][c], 1);  // на месте
+  game.userInput(Pause, false);
+  EXPECT_EQ(game.state(), GameState::kMoving);
+}
+
+TEST(TetrisGameTest, LandingSpawnsNextFigure) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  int cells = 0;
+  for (int tick = 0; tick < 30 && cells != 8; ++tick) {
+    cells = CountInfoCells(game.updateCurrentState());
+  }
+  EXPECT_EQ(cells, 8);  // первая BAR легла, вторая заспавнилась
+  EXPECT_EQ(game.state(), GameState::kMoving);
+}
+
+TEST(TetrisGameTest, ClearingRowAddsScore) {
+  TetrisModel::Field initial{};
+  for (int c = 0; c < kW; ++c) {
+    if (c < 3 || c > 6) initial[kH - 1][c] = 1;  // низ без места под BAR
+  }
+  TetrisGame game(TetrisModel(initial), BarGenerator());
+  game.userInput(Start, false);
+  int score = 0;
+  for (int tick = 0; tick < 30 && score != 100; ++tick) {
+    score = game.updateCurrentState().score;
+  }
+  EXPECT_EQ(score, 100);  // BAR замкнула строку — очки по таблице
+  EXPECT_FALSE(game.finished());
+}
+
+TEST(TetrisGameTest, BlockedSpawnEndsGame) {
+  TetrisModel::Field initial{};
+  for (int r = 0; r <= 2; ++r) {
+    for (int c = 3; c <= 6; ++c) initial[r][c] = 1;
+  }
+  TetrisGame game(TetrisModel(initial), BarGenerator());
+  game.userInput(Start, false);
+  game.updateCurrentState();  // спавн невозможен
+  EXPECT_EQ(game.state(), GameState::kGameOver);
+  EXPECT_TRUE(game.finished());
 }
 
 }  // namespace

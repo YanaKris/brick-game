@@ -1,14 +1,16 @@
 #include "s21_snake_model.h"
 
+#include <utility>
+
 namespace s21 {
 
-void GameModel::initSnake() {
+void SnakeModel::initSnake() {
   snake_tail_.push_back(Snake(snake_head_.x - 1, snake_head_.y));
   snake_tail_.push_back(Snake(snake_head_.x - 2, snake_head_.y));
   snake_tail_.push_back(Snake(snake_head_.x - 3, snake_head_.y));
 }
 
-GameModel::GameModel()
+SnakeModel::SnakeModel()
     : snake_head_(FIELD_WIDTH / 2, FIELD_HEIGHT / 2),
       apple(3, 5),
       eaten_apples(0),
@@ -16,36 +18,46 @@ GameModel::GameModel()
   initSnake();
 }
 
-std::string GameModel::printDebugInfo() const {
-  std::string debugInfo = "\nGameModel:\n";
-  debugInfo += "  snake_head_: (" + std::to_string(snake_head_.x) + ", " +
-               std::to_string(snake_head_.y) + ")\n";
-  debugInfo += "  snake_tail_: ";
-  for (const auto& snake : snake_tail_) {
-    debugInfo +=
-        "(" + std::to_string(snake.x) + ", " + std::to_string(snake.y) + ") ";
+SnakeModel::SnakeModel(Snake head, std::vector<Snake> tail, Snake apple)
+    : snake_head_(head),
+      snake_tail_(std::move(tail)),
+      apple(apple),
+      eaten_apples(0),
+      game_info({nullptr, nullptr, 0, 0, 0, 300, 0}) {}
+
+void SnakeModel::Rasterize(int** field) const {
+  for (int y = 0; y < FIELD_HEIGHT; ++y) {
+    for (int x = 0; x < FIELD_WIDTH; ++x) field[y][x] = 0;
   }
-  debugInfo += "begin x:" + std::to_string(snake_tail_.begin()->x) +
-               " y:" + std::to_string(snake_tail_.begin()->y) + " ";
-  debugInfo += "back x:" + std::to_string(snake_tail_.back().x) +
-               " y:" + std::to_string(snake_tail_.back().y) + "" + "\n";
-  debugInfo += "  apple: (" + std::to_string(apple.x) + ", " +
-               std::to_string(apple.y) + ")\n";
-  debugInfo += "  eaten_apples: " + std::to_string(eaten_apples) + "\n";
-  debugInfo += "  game_info: (" + std::to_string(game_info.score) + ", " +
-               std::to_string(game_info.level) + ", " +
-               std::to_string(game_info.speed) + ", " +
-               std::to_string(game_info.pause) + ")\n";
-  debugInfo += "  level_: " + std::to_string(level_) + "\n";
-  debugInfo += "  speed_: " + std::to_string(speed_) + "\n";
-  return debugInfo;
+  // модель живёт в 1-based координатах, поле GameInfo_t — 0-based
+  const auto put = [field](const Snake& cell, int value) {
+    if (cell.x >= 1 && cell.x <= FIELD_WIDTH && cell.y >= 1 &&
+        cell.y <= FIELD_HEIGHT) {
+      field[cell.y - 1][cell.x - 1] = value;
+    }
+  };
+  for (const Snake& segment : snake_tail_) put(segment, 1);
+  put(snake_head_, 1);
+  put(apple, 2);
 }
 
-void GameModel::setGameInfo(GameInfo_t* game_info) {
+int SnakeModel::LevelFor(int eaten_apples) {
+  const int level = eaten_apples / 5;
+  return level > 10 ? 10 : level;
+}
+
+int SnakeModel::SpeedFor(int level) {
+  const int speed = 300 - 50 * level;
+  return speed < 50 ? 50 : speed;
+}
+
+bool SnakeModel::IsWinLength(std::size_t length) { return length >= 200; }
+
+void SnakeModel::setGameInfo(GameInfo_t* game_info) {
   this->game_info = *game_info;
 }
 
-bool GameModel::moveSnake(int dx, int dy) {
+bool SnakeModel::moveSnake(int dx, int dy) {
   // Переменные dx и dy определяют направление движения змейки
 
   // Проверка на столкновение с границами
@@ -83,7 +95,12 @@ bool GameModel::moveSnake(int dx, int dy) {
   return true;
 }
 
-void GameModel::respawnApple() {
+void SnakeModel::respawnApple() {
+  // Змейка заняла всё поле (победа) — свободных клеток нет,
+  // иначе поиск ниже зациклится навсегда.
+  if (snake_tail_.size() + 1 >= FIELD_WIDTH * FIELD_HEIGHT) {
+    return;
+  }
   // Логика для случайного появления яблока
   static std::default_random_engine engine(
       std::chrono::system_clock::now().time_since_epoch().count());
@@ -110,30 +127,32 @@ void GameModel::respawnApple() {
   } while (!isFree);
 }
 
-void GameModel::increaseLevel() {
+void SnakeModel::increaseLevel() {
   if (level_ < 10) {
     level_++;
     game_info.speed -= 50;  // уменьшаем скорость движения змейки
   }
 }
 
-int GameModel::getLevel() const { return level_; }
+int SnakeModel::getLevel() const { return level_; }
 
-bool GameModel::isGameWon() const { return snake_tail_.size() >= 199; }
+bool SnakeModel::isGameWon() const {
+  return IsWinLength(snake_tail_.size() + 1);  // голова + хвост
+}
 
-const Snake& GameModel::getHead() const { return snake_head_; }
-const std::vector<Snake>& GameModel::getTail() const { return snake_tail_; }
-const Snake& GameModel::getApple() const { return apple; }
-int GameModel::getEatenApples() const { return eaten_apples; }
-int GameModel::getHighScore() const { return game_info.high_score; }
-void GameModel::setHighScore(int high_score) {
+const Snake& SnakeModel::getHead() const { return snake_head_; }
+const std::vector<Snake>& SnakeModel::getTail() const { return snake_tail_; }
+const Snake& SnakeModel::getApple() const { return apple; }
+int SnakeModel::getEatenApples() const { return eaten_apples; }
+int SnakeModel::getHighScore() const { return game_info.high_score; }
+void SnakeModel::setHighScore(int high_score) {
   game_info.high_score = high_score;
 }
-void GameModel::setScore(int score) { eaten_apples = score; }
+void SnakeModel::setScore(int score) { eaten_apples = score; }
 
-void GameModel::setLevel(int level) { level_ = level; }
-void GameModel::setSpeed(int speed) { speed_ = speed; }
-int GameModel::getSpeed() const { return game_info.speed; }
-void GameModel::setFig(int fig) { fig_ = fig; }
-int GameModel::getFig() { return fig_; }
+void SnakeModel::setLevel(int level) { level_ = level; }
+void SnakeModel::setSpeed(int speed) { speed_ = speed; }
+int SnakeModel::getSpeed() const { return game_info.speed; }
+void SnakeModel::setFig(int fig) { fig_ = fig; }
+int SnakeModel::getFig() { return fig_; }
 }  // namespace s21

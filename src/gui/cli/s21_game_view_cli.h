@@ -15,7 +15,7 @@
 
 class GameView {
  public:
-  void showMap(const s21::GameModel& model);
+  void showMap(const s21::SnakeModel& model);
   void loadHighScore(int& high_score);
   void saveHighScore(int high_score);
   void showWinScreen() const;

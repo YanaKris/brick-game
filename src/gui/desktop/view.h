@@ -1,4 +1,4 @@
-#ifndef MAINWINDOW_H
+﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QGridLayout>
@@ -24,7 +24,7 @@ class View : public QMainWindow {
 
   QString getGameName() {
     return game_name;
-  }  // получение названия выбранной игры
+  }  // РїРѕР»СѓС‡РµРЅРёРµ РЅР°Р·РІР°РЅРёСЏ РІС‹Р±СЂР°РЅРЅРѕР№ РёРіСЂС‹
 
  private slots:
   void on_pushButton_clicked();
@@ -34,16 +34,17 @@ class View : public QMainWindow {
   void on_pushButton_3_clicked();
 
  private:
-  Ui::View* ui;  // интерфейс окна
-  QString
-      game_name;  /// название выбранной игры возможно флаг для выбора методов
+  Ui::View* ui;       // РёРЅС‚РµСЂС„РµР№СЃ РѕРєРЅР°
+  QString game_name;  /// РЅР°Р·РІР°РЅРёРµ РІС‹Р±СЂР°РЅРЅРѕР№ РёРіСЂС‹
+                      /// РІРѕР·РјРѕР¶РЅРѕ С„Р»Р°Рі РґР»СЏ РІС‹Р±РѕСЂР°
+                      /// РјРµС‚РѕРґРѕРІ
   SnakeController* m_SnakeController;
   TetrisController* m_TetrisController;
   HelpField* m_helpField;
   QWidget* m_centralWidget;
   QGridLayout* m_gridLayout;
 
-  GameModel* m_gameModel;
+  SnakeModel* m_SnakeModel;
 };
 }  // namespace s21
 #endif  // MAINWINDOW_H

@@ -7,14 +7,14 @@ namespace s21 {
 TetrisModel::TetrisModel(const Field& initial) : field_(initial) {}
 
 bool TetrisModel::Spawn(TetrominoType type) {
-  return SpawnFigure(TetrominoFactory::Create(type));
+  return Spawn(TetrominoFactory::Create(type));
 }
 
 bool TetrisModel::SpawnRandom() {
-  return SpawnFigure(TetrominoFactory::CreateRandom());
+  return Spawn(TetrominoFactory::CreateRandom());
 }
 
-bool TetrisModel::SpawnFigure(std::unique_ptr<Tetromino> figure) {
+bool TetrisModel::Spawn(std::unique_ptr<Tetromino> figure) {
   // Стартовая позиция из legacy spawnTetrino: фигура появляется
   // в строках 0..2, колонках 3..6 (row=-1 — матрица 4×4 «свисает»
   // над полем пустой нулевой строкой).
