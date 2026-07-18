@@ -8,7 +8,6 @@ namespace {
 
 constexpr int kBaseSpeedMs = 300;
 
-// Таблица переходов FSM тетриса (подмножество GameState).
 Fsm<TetrisEvent> MakeTetrisFsm() {
   using S = GameState;
   using E = TetrisEvent;
@@ -52,12 +51,13 @@ void TetrisGame::userInput(UserAction_t action, bool) {
       if (Moving()) model_.Rotate();
       break;
     case Down:
-      // мягкое падение: немедленный шаг вниз
       if (Moving() && !model_.MoveDown()) HandleLanding();
       break;
     default:
       break;
   }
+
+  RefreshField();
 }
 
 GameInfo_t TetrisGame::updateCurrentState() {
@@ -80,31 +80,34 @@ void TetrisGame::Tick() {
     } else {
       fsm_.Dispatch(TetrisEvent::kSpawnBlocked);
     }
-    return;  // спавн-тик: падение начнётся со следующего
+    return;
   }
   if (!Moving()) return;
   if (!model_.MoveDown()) HandleLanding();
 }
 
-// Фигура легла: kMoving -> kAttaching, срезаем строки, -> kSpawn.
 void TetrisGame::HandleLanding() {
   fsm_.Dispatch(TetrisEvent::kLanded);
   model_.ClearFullRows();
   fsm_.Dispatch(TetrisEvent::kAttached);
 }
 
-GameInfo_t TetrisGame::MakeInfo() {
+void TetrisGame::RefreshField() {
   const TetrisModel::Field& cells = model_.field();
   for (int r = 0; r < FieldBuffer::kHeight; ++r) {
     for (int c = 0; c < FieldBuffer::kWidth; ++c) {
       field_.data()[r][c] = cells[r][c];
     }
   }
+}
+
+GameInfo_t TetrisGame::MakeInfo() {
+  RefreshField();
   GameInfo_t info{};
   info.field = field_.data();
-  info.next = next_.data();  // превью следующей фигуры появится с этапом Qt
+  info.next = next_.data();
   info.score = model_.score();
-  info.high_score = 0;  // рекорды переезжают в common на этапе CLI-MVC
+  info.high_score = 0;
   info.level = model_.level();
   info.speed = kBaseSpeedMs;
   info.pause = fsm_.state() == GameState::kPause ? 1 : 0;

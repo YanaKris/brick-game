@@ -34,6 +34,10 @@ class SnakeGame : public IGame {
   FieldBuffer next_;  // змейке не нужен, но контракт требует валидный next
   int dx_ = 1;
   int dy_ = 0;
+  // Направление последнего выполненного хода: развороты проверяются
+  // против него, иначе два ввода между тиками дают разворот на 180°.
+  int moved_dx_ = 1;
+  int moved_dy_ = 0;
   bool accelerated_ = false;
   int high_score_ = 0;
 };
