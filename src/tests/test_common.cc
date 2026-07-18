@@ -84,7 +84,7 @@ TEST(ObserverTest, SubscriptionUnsubscribesInDestructor) {
   {
     Subscription sub = subject.Subscribe([&calls](int) { ++calls; });
     subject.Notify(1);
-  } 
+  }
   subject.Notify(2);
   EXPECT_EQ(calls, 1);
   EXPECT_EQ(subject.observer_count(), 0u);
@@ -97,7 +97,7 @@ TEST(ObserverTest, MovedSubscriptionStaysActive) {
   {
     Subscription inner = subject.Subscribe([&calls](int) { ++calls; });
     outer = std::move(inner);
-  } 
+  }
   subject.Notify(1);
   EXPECT_EQ(calls, 1);
   EXPECT_TRUE(outer.active());
@@ -116,8 +116,8 @@ TEST(ObserverTest, ResetUnsubscribesEarly) {
 TEST(ObserverTest, SubscriptionOutlivingSubjectIsSafe) {
   auto subject = std::make_unique<Subject<int>>();
   Subscription sub = subject->Subscribe([](int) {});
-  subject.reset(); 
-  sub.Reset();     
+  subject.reset();
+  sub.Reset();
   SUCCEED();
 }
 

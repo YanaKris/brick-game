@@ -16,7 +16,7 @@ class TickTimer {
 
   void Reset(int period_ms);
   int RemainingMs() const;
-  bool Due() const;          
+  bool Due() const;
 
  private:
   Clock clock_;
