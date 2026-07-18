@@ -76,6 +76,7 @@ TEST(SnakeGameTest, DoubleTurnWithinOneTickCannotReverse) {
   GameInfo_t info = game.updateCurrentState();
   EXPECT_FALSE(game.finished());
   EXPECT_EQ(info.field[8][4], 1);
+}
 
 TEST(SnakeGameTest, ReverseCheckedAgainstLastMovedDirection) {
   SnakeGame game(MakeModel());
