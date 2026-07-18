@@ -28,6 +28,8 @@ TICK_TIMER_CC = gui/cli/tick_timer.cc
 CLI_CC   = gui/cli/main.cc gui/cli/cli_view.cc gui/cli/cli_controller.cc \
 	gui/cli/cli_input.cc $(TICK_TIMER_CC)
 API_CC   = api/game_api.cc
+# Desktop MVP core: Qt-free presenter (unit-tested without Qt).
+DESKTOP_CORE_CC = gui/desktop/game_presenter.cc
 BIN      = brickgame
 
 # files checked/formatted by style/format
@@ -42,8 +44,8 @@ FORMAT_FILES = interface.h \
 	tests/*.cc
 
 .PHONY: all cli run install uninstall clean dvi dist \
-        test test_snake test_common test_tetris test_api gcov_report style format \
-        valgrind
+        test test_snake test_common test_tetris test_api test_desktop \
+        gcov_report style format valgrind
 
 # Default: build only, do NOT run.
 all: cli
@@ -70,7 +72,7 @@ uninstall:
 	rm -rf build/
 
 # --- tests (GoogleTest) ---
-test: test_snake test_common test_tetris test_api
+test: test_snake test_common test_tetris test_api test_desktop
 
 # Snake tests: model (pure logic) + SnakeGame facade/FSM. No ncurses linked.
 test_snake:
@@ -98,13 +100,20 @@ test_api:
 		$(SNAKE_CC) $(TETRIS_CC) $(LDGTEST) -o test_api
 	./test_api
 
+# Desktop MVP presenter tests: Qt-free core over IGame. No Qt/qmake needed.
+test_desktop:
+	$(CXX) $(CXXFLAGS) tests/test_desktop_presenter.cc $(DESKTOP_CORE_CC) \
+		$(SNAKE_CC) $(HIGH_SCORE_CC) $(LDGTEST) -o test_desktop
+	./test_desktop
+
 # Coverage over the unit-tested translation units only (not the ncurses/Qt front-ends).
 gcov_report:
 	$(CC) $(CFLAGS) $(GCOV_FLAGS) -c $(TETRIS_C) -o tetris_legacy.o
 	$(CXX) $(CXXFLAGS) $(GCOV_FLAGS) tests/tests.cc tests/test_snake_fsm.cc \
 		tests/test_common.cc tests/test_tetris.cc tests/test_game_api.cc \
+		tests/test_desktop_presenter.cc \
 		$(SNAKE_CC) $(TETRIS_CC) $(API_CC) $(COMMON_CC) $(TICK_TIMER_CC) \
-		tetris_legacy.o $(LDGTEST) -o gcov_test
+		$(DESKTOP_CORE_CC) tetris_legacy.o $(LDGTEST) -o gcov_test
 	./gcov_test
 	lcov --capture --directory . --output-file coverage.info --no-external \
 		--ignore-errors inconsistent,mismatch
@@ -137,6 +146,6 @@ dist:
 clean:
 	rm -rf *.o *.info *.gcda *.gcno *.gcov report/ build/ dist/
 	rm -f $(BIN) main tetris snake test test_snake test_common test_tetris \
-		test_api testing gcov_test
+		test_api test_desktop testing gcov_test
 	rm -f *.tar.gz
 	rm -rf *.dSYM
