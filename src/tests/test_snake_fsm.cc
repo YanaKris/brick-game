@@ -12,8 +12,6 @@ using s21::Snake;
 using s21::SnakeGame;
 using s21::SnakeModel;
 
-// Модель с головой в (5,10), хвостом влево и яблоком в углу —
-// детерминированные тики без случайного яблока на пути.
 SnakeModel MakeModel() {
   return SnakeModel(Snake(5, 10), {Snake(4, 10), Snake(3, 10), Snake(2, 10)},
                     Snake(1, 1));
@@ -45,8 +43,8 @@ TEST(SnakeGameTest, TickMovesSnakeRight) {
   SnakeGame game(MakeModel());
   game.userInput(Start, false);
   GameInfo_t info = game.updateCurrentState();
-  EXPECT_EQ(info.field[9][5], 1);  // голова сместилась в (6,10)
-  EXPECT_EQ(info.field[9][1], 0);  // конец хвоста освободил (2,10)
+  EXPECT_EQ(info.field[9][5], 1);
+  EXPECT_EQ(info.field[9][1], 0);
 }
 
 TEST(SnakeGameTest, PauseFreezesGame) {
@@ -56,18 +54,38 @@ TEST(SnakeGameTest, PauseFreezesGame) {
   EXPECT_EQ(game.state(), GameState::kPause);
   GameInfo_t info = game.updateCurrentState();
   EXPECT_EQ(info.pause, 1);
-  EXPECT_EQ(info.field[9][4], 1);  // змейка не сдвинулась
+  EXPECT_EQ(info.field[9][4], 1);
   EXPECT_EQ(info.field[9][5], 0);
-  game.userInput(Pause, false);  // повторная пауза — продолжить
+  game.userInput(Pause, false);
   EXPECT_EQ(game.state(), GameState::kMoving);
 }
 
 TEST(SnakeGameTest, ReverseTurnIsIgnored) {
   SnakeGame game(MakeModel());
   game.userInput(Start, false);
-  game.userInput(Left, false);  // разворот на 180° запрещён
+  game.userInput(Left, false);
   GameInfo_t info = game.updateCurrentState();
-  EXPECT_EQ(info.field[9][5], 1);  // продолжает движение вправо
+  EXPECT_EQ(info.field[9][5], 1);
+}
+
+TEST(SnakeGameTest, DoubleTurnWithinOneTickCannotReverse) {
+  SnakeGame game(MakeModel());
+  game.userInput(Start, false);
+  game.userInput(Up, false);
+  game.userInput(Left, false);
+  GameInfo_t info = game.updateCurrentState();
+  EXPECT_FALSE(game.finished());
+  EXPECT_EQ(info.field[8][4], 1);
+
+TEST(SnakeGameTest, ReverseCheckedAgainstLastMovedDirection) {
+  SnakeGame game(MakeModel());
+  game.userInput(Start, false);
+  game.userInput(Up, false);
+  game.updateCurrentState();
+  game.userInput(Down, false);
+  GameInfo_t info = game.updateCurrentState();
+  EXPECT_EQ(info.field[7][4], 1);
+  EXPECT_FALSE(game.finished());
 }
 
 TEST(SnakeGameTest, TurnUpWorks) {
@@ -75,7 +93,7 @@ TEST(SnakeGameTest, TurnUpWorks) {
   game.userInput(Start, false);
   game.userInput(Up, false);
   GameInfo_t info = game.updateCurrentState();
-  EXPECT_EQ(info.field[8][4], 1);  // голова ушла вверх: (5,9)
+  EXPECT_EQ(info.field[8][4], 1);
 }
 
 TEST(SnakeGameTest, CrashIntoWallEndsGame) {
@@ -83,7 +101,7 @@ TEST(SnakeGameTest, CrashIntoWallEndsGame) {
                    {Snake(9, 10), Snake(8, 10), Snake(7, 10)}, Snake(1, 1));
   SnakeGame game(std::move(model));
   game.userInput(Start, false);
-  game.updateCurrentState();  // движение вправо — в стену
+  game.updateCurrentState();
   EXPECT_EQ(game.state(), GameState::kGameOver);
   EXPECT_TRUE(game.finished());
 }
@@ -99,13 +117,11 @@ TEST(SnakeGameTest, ReachingLength200Wins) {
   }
   SnakeGame game(SnakeModel(Snake(2, 1), tail, Snake(3, 1)));
   game.userInput(Start, false);
-  game.updateCurrentState();  // съедает 200-е яблоко
+  game.updateCurrentState();
   EXPECT_EQ(game.state(), GameState::kWin);
   EXPECT_TRUE(game.finished());
 }
 
-// Баг-фикс: ускорение по Action — тик с зажатым Action отдаёт
-// фронту уменьшенный speed (быстрее таймер), потом возвращается.
 TEST(SnakeGameTest, ActionAcceleratesForOneTick) {
   SnakeGame game(MakeModel());
   game.userInput(Start, false);
@@ -113,9 +129,9 @@ TEST(SnakeGameTest, ActionAcceleratesForOneTick) {
   EXPECT_EQ(info.speed, 300);
   game.userInput(Action, false);
   info = game.updateCurrentState();
-  EXPECT_EQ(info.speed, 150);  // ускорение
+  EXPECT_EQ(info.speed, 150);
   info = game.updateCurrentState();
-  EXPECT_EQ(info.speed, 300);  // буст одноразовый
+  EXPECT_EQ(info.speed, 300);
 }
 
 TEST(SnakeGameTest, EatingAppleUpdatesScoreAndHighScore) {
@@ -123,10 +139,10 @@ TEST(SnakeGameTest, EatingAppleUpdatesScoreAndHighScore) {
                    Snake(6, 5));
   SnakeGame game(std::move(model));
   game.userInput(Start, false);
-  GameInfo_t info = game.updateCurrentState();  // съедает яблоко в (6,5)
+  GameInfo_t info = game.updateCurrentState();
   EXPECT_EQ(info.score, 1);
   EXPECT_EQ(info.high_score, 1);
-  EXPECT_EQ(info.level, 0);  // уровень растёт с 5 очков
+  EXPECT_EQ(info.level, 0);
 }
 
 }  // namespace

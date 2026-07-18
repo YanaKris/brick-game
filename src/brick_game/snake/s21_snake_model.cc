@@ -58,38 +58,35 @@ void SnakeModel::setGameInfo(GameInfo_t* game_info) {
 }
 
 bool SnakeModel::moveSnake(int dx, int dy) {
-  // Переменные dx и dy определяют направление движения змейки
+  // Все проверки — до любых мутаций: при неудаче состояние не меняется.
+  const int new_x = snake_head_.x + dx;
+  const int new_y = snake_head_.y + dy;
 
-  // Проверка на столкновение с границами
-  if (snake_head_.x + dx <= 0 || snake_head_.x + dx >= FIELD_WIDTH + 1 ||
-      snake_head_.y + dy <= 0 || snake_head_.y + dy >= FIELD_HEIGHT + 1) {
+  // Столкновение с границами (координаты 1-based)
+  if (new_x <= 0 || new_x > FIELD_WIDTH || new_y <= 0 || new_y > FIELD_HEIGHT) {
     return false;
-  } else {
-    // Обновляем позицию головы змейки
-    snake_head_.x += dx;
-    snake_head_.y += dy;
-    // Проверка на столкновение с хвостом
-    for (const auto& segment : snake_tail_) {
-      if (snake_head_.x == segment.x && snake_head_.y == segment.y) {
-        return false;
-      }
+  }
+
+  const bool eats = (new_x == apple.x && new_y == apple.y);
+
+  // Столкновение с хвостом. Последний сегмент в этот же тик освобождает
+  // свою клетку (если змейка не растёт), поэтому не блокирует ход.
+  std::size_t blocking = snake_tail_.size();
+  if (!eats && blocking > 0) --blocking;
+  for (std::size_t i = 0; i < blocking; ++i) {
+    if (new_x == snake_tail_[i].x && new_y == snake_tail_[i].y) {
+      return false;
     }
   }
 
-  // Проверка на съеденное яблоко
-  if (snake_head_.x == apple.x && snake_head_.y == apple.y) {
+  snake_tail_.insert(snake_tail_.begin(), snake_head_);  // старая голова — шея
+  snake_head_.x = new_x;
+  snake_head_.y = new_y;
+  if (eats) {
     eaten_apples++;
-
-    snake_tail_.insert(snake_tail_.begin(),
-                       Snake(snake_head_.x - dx, snake_head_.y - dy));
     respawnApple();
   } else {
-    if (!snake_tail_.empty()) {
-      snake_tail_.pop_back();
-    }
-
-    snake_tail_.insert(snake_tail_.begin(),
-                       Snake(snake_head_.x - dx, snake_head_.y - dy));
+    snake_tail_.pop_back();
   }
 
   return true;

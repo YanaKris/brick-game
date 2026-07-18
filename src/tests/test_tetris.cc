@@ -24,7 +24,6 @@ using s21::TetrominoType;
 constexpr int kH = TetrisModel::kFieldHeight;
 constexpr int kW = TetrisModel::kFieldWidth;
 
-// Ожидаемые формы фигур — в точности таблица из legacy tetrinoSet.
 struct ShapeCase {
   int legacy_fig;
   TetrominoType type;
@@ -44,9 +43,6 @@ const std::vector<ShapeCase>& AllShapes() {
   return shapes;
 }
 
-// --- Обвязка legacy C-кода ---
-
-// RAII-обёртка над GameInfo_t: field и next 20×10 без ручных new/delete.
 class CGame {
  public:
   CGame() {
@@ -79,8 +75,6 @@ class CGame {
   std::array<int*, kH> field_rows_{};
   std::array<int*, kH> next_rows_{};
 };
-
-// === Характеризационные тесты legacy tetris.c (эталон паритета) ===
 
 TEST(LegacyTetrisTest, TetrinoSetDefinesSevenShapes) {
   for (const ShapeCase& shape : AllShapes()) {
@@ -206,7 +200,7 @@ TEST(LegacyTetrisTest, DeleteRowsScoringTable) {
 TEST(LegacyTetrisTest, DeleteRowsShiftsStackDown) {
   CGame game;
   game.FillRow(19);
-  game.set_cell(18, 0, 1);  // маркер над заполненной строкой
+  game.set_cell(18, 0, 1);
   deleteRows(game.get());
   EXPECT_EQ(game.cell(19, 0), 1);
   EXPECT_EQ(game.cell(18, 0), 0);
@@ -219,14 +213,11 @@ TEST(LegacyTetrisTest, LevelFormulaCapsAtTen) {
   game.get()->score = 1200;
   updateCurrentStateTet(game.get(), 0);
   EXPECT_EQ(game.get()->level, 2);
-  game.get()->score = 6601;  // 6601 / 600 = 11 -> потолок 10
+  game.get()->score = 6601;
   updateCurrentStateTet(game.get(), 0);
   EXPECT_EQ(game.get()->level, 10);
 }
 
-// === s21::Tetromino / TetrominoFactory ===
-
-// Золотой тест паритета: формы фабрики бит-в-бит совпадают с legacy.
 TEST(TetrominoTest, FactoryShapesMatchLegacyTetrinoSet) {
   for (const ShapeCase& shape : AllShapes()) {
     std::unique_ptr<Tetromino> fig = TetrominoFactory::Create(shape.type);
@@ -247,7 +238,6 @@ TEST(TetrominoTest, RotatedMatrixMatchesLegacyFormula) {
   std::unique_ptr<Tetromino> fig =
       TetrominoFactory::Create(TetrominoType::kBar);
   Tetromino::Matrix rotated = fig->RotatedMatrix();
-  // future[j][3-i] = cur[i][j]: горизонтальный BAR -> колонка 2
   for (int r = 0; r <= 3; ++r) EXPECT_EQ(rotated[r][2], 1);
   int total = 0;
   for (int i = 0; i < 4; ++i) {
@@ -268,10 +258,8 @@ TEST(TetrominoTest, CreateRandomProducesValidShapes) {
     }
     EXPECT_EQ(total, 4);
   }
-  EXPECT_GE(seen.size(), 2u);  // 50 одинаковых подряд ~ невозможно
+  EXPECT_GE(seen.size(), 2u);
 }
-
-// === s21::TetrisModel (паритет с legacy-сценариями выше) ===
 
 TetrisModel::Field MakeFieldWithFullBottomRows(int rows) {
   TetrisModel::Field field{};
@@ -329,7 +317,7 @@ TEST(TetrisModelTest, MoveDownAttachesAtBottom) {
   EXPECT_EQ(moves, 19);
   for (int c = 3; c <= 6; ++c) EXPECT_EQ(model.field()[19][c], 1);
   EXPECT_EQ(CountCells(model.field()), 4);
-  EXPECT_FALSE(model.has_active_figure());  // фигура легла
+  EXPECT_FALSE(model.has_active_figure());
 }
 
 TEST(TetrisModelTest, MoveDownStopsOnStack) {
@@ -358,7 +346,7 @@ TEST(TetrisModelTest, MoveLeftStopsAtWall) {
   model.Spawn(TetrominoType::kBar);
   for (int step = 0; step < 3; ++step) model.MoveLeft();
   for (int c = 0; c <= 3; ++c) EXPECT_EQ(model.field()[0][c], 1);
-  model.MoveLeft();  // в стену — без движения
+  model.MoveLeft();
   for (int c = 0; c <= 3; ++c) EXPECT_EQ(model.field()[0][c], 1);
   EXPECT_EQ(CountCells(model.field()), 4);
 }
@@ -368,7 +356,7 @@ TEST(TetrisModelTest, MoveRightStopsAtWall) {
   model.Spawn(TetrominoType::kBar);
   for (int step = 0; step < 3; ++step) model.MoveRight();
   for (int c = 6; c <= 9; ++c) EXPECT_EQ(model.field()[0][c], 1);
-  model.MoveRight();  // в стену — без движения
+  model.MoveRight();
   for (int c = 6; c <= 9; ++c) EXPECT_EQ(model.field()[0][c], 1);
   EXPECT_EQ(CountCells(model.field()), 4);
 }
@@ -376,7 +364,7 @@ TEST(TetrisModelTest, MoveRightStopsAtWall) {
 TEST(TetrisModelTest, RotateTurnsBarVertical) {
   TetrisModel model;
   model.Spawn(TetrominoType::kBar);
-  model.MoveDown();  // как в legacy: у самого верха поворот не влезает
+  model.MoveDown();
   model.Rotate();
   for (int r = 0; r <= 3; ++r) EXPECT_EQ(model.field()[r][5], 1);
   EXPECT_EQ(CountCells(model.field()), 4);
@@ -385,7 +373,7 @@ TEST(TetrisModelTest, RotateTurnsBarVertical) {
 TEST(TetrisModelTest, RotateBlockedAboveField) {
   TetrisModel model;
   model.Spawn(TetrominoType::kBar);
-  model.Rotate();  // row=-1: повёрнутый BAR вылез бы за поле
+  model.Rotate();
   for (int c = 3; c <= 6; ++c) EXPECT_EQ(model.field()[0][c], 1);
   EXPECT_EQ(CountCells(model.field()), 4);
 }
@@ -402,7 +390,7 @@ TEST(TetrisModelTest, ClearFullRowsScoringTable) {
 
 TEST(TetrisModelTest, ClearRowsShiftsStackDown) {
   TetrisModel::Field initial = MakeFieldWithFullBottomRows(1);
-  initial[18][0] = 1;  // маркер над заполненной строкой
+  initial[18][0] = 1;
   TetrisModel model(initial);
   EXPECT_EQ(model.ClearFullRows(), 1);
   EXPECT_EQ(model.field()[19][0], 1);
@@ -414,7 +402,7 @@ TEST(TetrisModelTest, ScoreAccumulatesAndLevelGrows) {
   TetrisModel model(MakeFieldWithFullBottomRows(4));
   model.ClearFullRows();
   EXPECT_EQ(model.score(), 1500);
-  EXPECT_EQ(model.level(), 2);  // 1500 / 600 = 2
+  EXPECT_EQ(model.level(), 2);
 }
 
 TEST(TetrisModelTest, ScoreForMatchesLegacyTable) {
@@ -430,7 +418,7 @@ TEST(TetrisModelTest, LevelForCapsAtTen) {
   EXPECT_EQ(TetrisModel::LevelFor(599), 0);
   EXPECT_EQ(TetrisModel::LevelFor(600), 1);
   EXPECT_EQ(TetrisModel::LevelFor(1200), 2);
-  EXPECT_EQ(TetrisModel::LevelFor(6601), 10);  // 11 -> потолок 10
+  EXPECT_EQ(TetrisModel::LevelFor(6601), 10);
 }
 
 TEST(TetrisModelTest, SpawnAcceptsInjectedFigure) {
@@ -439,12 +427,9 @@ TEST(TetrisModelTest, SpawnAcceptsInjectedFigure) {
   for (int c = 3; c <= 6; ++c) EXPECT_EQ(model.field()[0][c], 1);
 }
 
-// === s21::TetrisGame (фасад IGame над FSM) ===
-
 using s21::GameState;
 using s21::TetrisGame;
 
-// Детерминированный генератор: всегда BAR.
 TetrisGame::FigureGenerator BarGenerator() {
   return [] { return TetrominoFactory::Create(TetrominoType::kBar); };
 }
@@ -481,8 +466,8 @@ TEST(TetrisGameTest, FirstTickSpawnsFigure) {
 TEST(TetrisGameTest, TickDropsFigureOneRow) {
   TetrisGame game(BarGenerator());
   game.userInput(Start, false);
-  game.updateCurrentState();                    // спавн
-  GameInfo_t info = game.updateCurrentState();  // падение
+  game.updateCurrentState();                  
+  GameInfo_t info = game.updateCurrentState();
   for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[1][c], 1);
   EXPECT_EQ(CountInfoCells(info), 4);
 }
@@ -490,10 +475,19 @@ TEST(TetrisGameTest, TickDropsFigureOneRow) {
 TEST(TetrisGameTest, LeftShiftsFigure) {
   TetrisGame game(BarGenerator());
   game.userInput(Start, false);
-  game.updateCurrentState();  // спавн: колонки 3..6
+  game.updateCurrentState(); 
   game.userInput(Left, false);
-  GameInfo_t info = game.updateCurrentState();  // + падение на строку 1
+  GameInfo_t info = game.updateCurrentState();
   for (int c = 2; c <= 5; ++c) EXPECT_EQ(info.field[1][c], 1);
+}
+
+TEST(TetrisGameTest, InputRefreshesFieldBufferImmediately) {
+  TetrisGame game(BarGenerator());
+  game.userInput(Start, false);
+  GameInfo_t info = game.updateCurrentState();
+  game.userInput(Left, false);
+  EXPECT_EQ(info.field[0][2], 1);
+  EXPECT_EQ(info.field[0][6], 0);
 }
 
 TEST(TetrisGameTest, RightShiftsFigure) {
@@ -508,10 +502,10 @@ TEST(TetrisGameTest, RightShiftsFigure) {
 TEST(TetrisGameTest, ActionRotatesFigure) {
   TetrisGame game(BarGenerator());
   game.userInput(Start, false);
-  game.updateCurrentState();      // спавн (row = -1)
-  game.updateCurrentState();      // row = 0: место для поворота есть
-  game.userInput(Action, false);  // BAR -> вертикаль, колонка 5
-  GameInfo_t info = game.updateCurrentState();  // + падение
+  game.updateCurrentState();
+  game.updateCurrentState();
+  game.userInput(Action, false);
+  GameInfo_t info = game.updateCurrentState();
   for (int r = 1; r <= 4; ++r) EXPECT_EQ(info.field[r][5], 1);
   EXPECT_EQ(CountInfoCells(info), 4);
 }
@@ -519,21 +513,21 @@ TEST(TetrisGameTest, ActionRotatesFigure) {
 TEST(TetrisGameTest, DownDropsImmediately) {
   TetrisGame game(BarGenerator());
   game.userInput(Start, false);
-  game.updateCurrentState();                    // спавн: строка 0
-  game.userInput(Down, false);                  // мгновенно вниз: строка 1
-  GameInfo_t info = game.updateCurrentState();  // тик: строка 2
+  game.updateCurrentState();
+  game.userInput(Down, false);
+  GameInfo_t info = game.updateCurrentState();
   for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[2][c], 1);
 }
 
 TEST(TetrisGameTest, PauseStopsFalling) {
   TetrisGame game(BarGenerator());
   game.userInput(Start, false);
-  game.updateCurrentState();  // спавн: строка 0
+  game.updateCurrentState();
   game.userInput(Pause, false);
   EXPECT_EQ(game.state(), GameState::kPause);
   GameInfo_t info = game.updateCurrentState();
   EXPECT_EQ(info.pause, 1);
-  for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[0][c], 1);  // на месте
+  for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[0][c], 1);
   game.userInput(Pause, false);
   EXPECT_EQ(game.state(), GameState::kMoving);
 }
@@ -545,14 +539,14 @@ TEST(TetrisGameTest, LandingSpawnsNextFigure) {
   for (int tick = 0; tick < 30 && cells != 8; ++tick) {
     cells = CountInfoCells(game.updateCurrentState());
   }
-  EXPECT_EQ(cells, 8);  // первая BAR легла, вторая заспавнилась
+  EXPECT_EQ(cells, 8);
   EXPECT_EQ(game.state(), GameState::kMoving);
 }
 
 TEST(TetrisGameTest, ClearingRowAddsScore) {
   TetrisModel::Field initial{};
   for (int c = 0; c < kW; ++c) {
-    if (c < 3 || c > 6) initial[kH - 1][c] = 1;  // низ без места под BAR
+    if (c < 3 || c > 6) initial[kH - 1][c] = 1;
   }
   TetrisGame game(TetrisModel(initial), BarGenerator());
   game.userInput(Start, false);
@@ -560,7 +554,7 @@ TEST(TetrisGameTest, ClearingRowAddsScore) {
   for (int tick = 0; tick < 30 && score != 100; ++tick) {
     score = game.updateCurrentState().score;
   }
-  EXPECT_EQ(score, 100);  // BAR замкнула строку — очки по таблице
+  EXPECT_EQ(score, 100);
   EXPECT_FALSE(game.finished());
 }
 
@@ -571,7 +565,7 @@ TEST(TetrisGameTest, BlockedSpawnEndsGame) {
   }
   TetrisGame game(TetrisModel(initial), BarGenerator());
   game.userInput(Start, false);
-  game.updateCurrentState();  // спавн невозможен
+  game.updateCurrentState();
   EXPECT_EQ(game.state(), GameState::kGameOver);
   EXPECT_TRUE(game.finished());
 }

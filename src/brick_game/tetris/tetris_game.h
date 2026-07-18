@@ -11,7 +11,6 @@
 
 namespace s21 {
 
-// События FSM тетриса; таблица переходов — в tetris_game.cc.
 enum class TetrisEvent {
   kStartPressed,
   kSpawned,
@@ -21,8 +20,6 @@ enum class TetrisEvent {
   kPauseToggled
 };
 
-// Фасад IGame над TetrisModel + FSM. Генератор фигур инжектится
-// (Strategy/DI): по умолчанию — случайная фигура из фабрики.
 class TetrisGame : public IGame {
  public:
   using FigureGenerator = std::function<std::unique_ptr<Tetromino>()>;
@@ -40,6 +37,7 @@ class TetrisGame : public IGame {
   bool Moving() const;
   void Tick();
   void HandleLanding();
+  void RefreshField();
   GameInfo_t MakeInfo();
 
   TetrisModel model_;

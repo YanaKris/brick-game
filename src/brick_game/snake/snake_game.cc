@@ -70,7 +70,9 @@ bool SnakeGame::finished() const {
 
 void SnakeGame::HandleTurn(int dx, int dy) {
   if (fsm_.state() != GameState::kMoving) return;
-  if (dx == -dx_ && dy == -dy_) return;  // разворот на 180° запрещён
+  // Разворот на 180° запрещён — относительно последнего выполненного
+  // хода, а не последнего ввода (два ввода за тик не дают разворота).
+  if (dx == -moved_dx_ && dy == -moved_dy_) return;
   dx_ = dx;
   dy_ = dy;
 }
@@ -81,6 +83,8 @@ void SnakeGame::Tick() {
     fsm_.Dispatch(SnakeEvent::kCrashed);
     return;
   }
+  moved_dx_ = dx_;
+  moved_dy_ = dy_;
   if (model_.isGameWon()) fsm_.Dispatch(SnakeEvent::kWon);
   if (model_.getEatenApples() > high_score_) {
     high_score_ = model_.getEatenApples();
