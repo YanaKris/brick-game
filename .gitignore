@@ -145,8 +145,20 @@ src/brickgame
 src/test_snake
 src/test_common
 src/test_tetris
+src/test_api
+src/test_desktop
 src/gcov_test
 src/testing
 src/main
 src/tetris
 src/snake
+
+# Qt desktop build artifacts (qmake / make / moc / uic / runtime)
+src/gui/desktop/Makefile
+src/gui/desktop/.qmake.stash
+src/gui/desktop/moc_predefs.h
+src/gui/desktop/moc_*.cpp
+src/gui/desktop/ui_*.h
+src/gui/desktop/game_menu
+src/gui/desktop/high_score_snake.txt
+src/gui/desktop/record.txt

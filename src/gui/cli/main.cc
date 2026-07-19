@@ -7,7 +7,7 @@ namespace {
 
 void RunMenu() {
   while (true) {
-    timeout(-1); 
+    timeout(-1);
     erase();
     mvprintw(6, 10, "1. TETRIS");
     mvprintw(8, 10, "2. SNAKE");

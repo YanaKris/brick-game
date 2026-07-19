@@ -466,7 +466,7 @@ TEST(TetrisGameTest, FirstTickSpawnsFigure) {
 TEST(TetrisGameTest, TickDropsFigureOneRow) {
   TetrisGame game(BarGenerator());
   game.userInput(Start, false);
-  game.updateCurrentState();                  
+  game.updateCurrentState();
   GameInfo_t info = game.updateCurrentState();
   for (int c = 3; c <= 6; ++c) EXPECT_EQ(info.field[1][c], 1);
   EXPECT_EQ(CountInfoCells(info), 4);
@@ -475,7 +475,7 @@ TEST(TetrisGameTest, TickDropsFigureOneRow) {
 TEST(TetrisGameTest, LeftShiftsFigure) {
   TetrisGame game(BarGenerator());
   game.userInput(Start, false);
-  game.updateCurrentState(); 
+  game.updateCurrentState();
   game.userInput(Left, false);
   GameInfo_t info = game.updateCurrentState();
   for (int c = 2; c <= 5; ++c) EXPECT_EQ(info.field[1][c], 1);

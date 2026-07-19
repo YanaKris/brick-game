@@ -18,7 +18,7 @@ class CliController {
 
  private:
   bool WaitForStart();
-  GameInfo_t Advance(); 
+  GameInfo_t Advance();
   void Finish(const GameInfo_t& info);
 
   std::unique_ptr<IGame> game_;

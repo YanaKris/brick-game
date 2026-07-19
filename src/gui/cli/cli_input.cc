@@ -8,7 +8,7 @@ namespace {
 constexpr int kEnter = 10;
 constexpr int kEscape = 27;
 constexpr int kSpace = 32;
-constexpr int kSlash = 47; 
+constexpr int kSlash = 47;
 }  // namespace
 
 std::optional<UserAction_t> CliInput::Poll() const {

@@ -1,146 +1,64 @@
-﻿#include "s21_tetris_controller.h"
+#include "s21_tetris_controller.h"
 
-s21::TetrisController::TetrisController(SnakeModel* m_SnakeModel)
-    : m_SnakeModel_(m_SnakeModel) {
-  setFixedSize(CELL_SIZE * FIELD_WIDTH + 40, CELL_SIZE * FIELD_HEIGHT + 40);
-  setFocusPolicy(Qt::StrongFocus);  // РїРѕРґРєР»СЋС‡РµРЅРёРµ РєРЅРѕРїРѕРє
-  m_tetrisItemSize = CELL_SIZE;
-  m_tetrino = new Tetrino();
-  m_gameInfo = new GameInfo_t();
-  // РІС‹РґРµР»РµРЅРёРµ РїР°РјСЏС‚Рё РґР»СЏ РїРѕР»РµРёМ†
-  m_gameInfo->field = new int*[20];
-  for (int i = 0; i < 20; i++) {
-    m_gameInfo->field[i] = new int[10];
-    for (int j = 0; j < 10; j++) {
-      m_gameInfo->field[i][j] = 0;
-    }
-  }
-  m_gameInfo->next = new int*[20];
-  for (int i = 0; i < 20; i++) {
-    m_gameInfo->next[i] = new int[10];
-    for (int j = 0; j < 10; j++) {
-      m_gameInfo->next[i][j] = 0;
-    }
-  }
-  m_gameInfo->speed = 400;
-  m_gameInfo->score = 0;
-  m_gameInfo->level = 0;
-  m_gameInfo->high_score = 0;
-  currentFig = rand() % 7;
+#include <QKeyEvent>
 
-  m_moveTetrisTimer = new QTimer();
-  connect(m_moveTetrisTimer, &QTimer::timeout, this,
-          &TetrisController::MoveTetrisSlot);
-  m_moveTetrisTimer->start(
-      m_gameInfo->speed);  // СЃРєРѕСЂРѕСЃС‚СЊ РїР°РґРµРЅРёСЏ С„РёРіСѓСЂС‹
+#include "../../../brick_game/common/game_factory.h"
+
+namespace s21 {
+
+TetrisController::TetrisController(TetrisView* view, QObject* parent)
+    : QObject(parent),
+      view_(view),
+      presenter_(GameFactory::Make(kTetris), "record.txt") {
+  connect(view_, &TetrisView::KeyPressed, this, &TetrisController::OnKey);
+  connect(&timer_, &QTimer::timeout, this, &TetrisController::OnTick);
+
+  presenter_.Begin();
+  GameInfo_t info = presenter_.Tick();
+  view_->Render(info);
+  timer_.start(info.speed);
 }
 
-void s21::TetrisController::paintEvent(QPaintEvent* e) {
-  Q_UNUSED(e)
-  QPainter painter;
-  painter.begin(this);
+void TetrisController::OnTick() {
+  GameInfo_t info = presenter_.Tick();
+  view_->Render(info);
+  timer_.setInterval(info.speed);
+  if (presenter_.Finished()) {
+    timer_.stop();
+    view_->ShowMessage("GAME OVER");
+  }
+}
 
-  // Р±Р»РѕРє РґР»СЏ РІС‹РІРѕРґР° С‚РµРєСЃС‚Р° РїСЂРѕРёРіСЂС‹С€Р°
-  if (m_user_action == Terminate) {
-    QFont font("Arial", 20, 250);
-    QFontMetrics fontMetrics(font);
-    int textWidth = fontMetrics.horizontalAdvance("Game Over");
-    int textHeight = fontMetrics.height();
-    QRect textRect(width() / 2 - textWidth / 2, height() / 2 - textHeight / 2,
-                   textWidth, textHeight);
-    painter.setFont(font);
-    painter.drawText(textRect, Qt::AlignHCenter | Qt::AlignVCenter,
-                     "Game Over");
+void TetrisController::OnKey(int key) {
+  const bool over = presenter_.Finished();
+  const bool restart = over && (key == Qt::Key_Return || key == Qt::Key_Enter);
+  if (key == Qt::Key_Escape || restart) {
+    emit ExitToMenu();
     return;
   }
+  if (over) return;
 
-  painter.setBrush(Qt::white);
-  painter.setOpacity(0.5);
-  painter.drawRect(0, 0, width() - 40, height() - 40);
-  painter.setOpacity(1);
-  // СЂРёСЃСѓСЋ С‚РµС‚СЂРёРЅРѕ
-  painter.setBrush(Qt::red);
-  printField(m_gameInfo->field, 0, 0, FIELD_WIDTH, FIELD_HEIGHT);
-  painter.end();
-}
-
-void s21::TetrisController::keyPressEvent(QKeyEvent* e) {
-  if (e->key() == Qt::Key_Left) {
-    m_user_action = Left;
-  }
-  if (e->key() == Qt::Key_Right) {
-    m_user_action = Right;
-  }
-  if (e->key() == Qt::Key_Up) {
-    m_user_action = Up;
-  }
-  if (e->key() == Qt::Key_Down) {
-    m_user_action = Down;
-  }
-  if (e->key() == Qt::Key_Space) {
-    m_user_action = Pause;
-  }
-  if (e->key() == Qt::Key_Slash) {
-    m_user_action = Action;
-  }
-  if (e->key() == Qt::Key_Enter) {
-    m_user_action = Start;
-  }
-}
-
-void s21::TetrisController::MoveTetrisSlot() {
-  if (m_user_action == Pause) {
-    return;
-  }
-  m_moveTetrisTimer->start(m_gameInfo->speed);
-
-  srand(time(nullptr));
-
-  if (spawn == false) {
-    deleteRows(m_gameInfo);
-    work = ::spawnTetrino(m_gameInfo, currentFig, m_tetrino);
-    if (work == false) {
-      m_user_action = Terminate;
-      repaint();
-      m_moveTetrisTimer->stop();
+  UserAction_t action;
+  switch (key) {
+    case Qt::Key_Left:
+      action = Left;
+      break;
+    case Qt::Key_Right:
+      action = Right;
+      break;
+    case Qt::Key_Down:
+      action = Down;
+      break;
+    case Qt::Key_Up:
+      action = Action; 
+      break;
+    case Qt::Key_Space:
+      action = Pause;
+      break;
+    default:
       return;
-    }
-    m_SnakeModel_->setFig(rand() % 7);
-    currentFig = m_SnakeModel_->getFig();
-    spawn = true;
   }
-  spawn = ::userInputTet(m_gameInfo, m_user_action, m_tetrino);
-
-  if (::tetrinoMoveDown(m_gameInfo, m_tetrino) == false) {
-    spawn = false;
-  }
-  m_user_action = Start;
-  repaint();
-
-  m_SnakeModel_->setScore(m_gameInfo->score);
-  m_SnakeModel_->setLevel(m_gameInfo->level);
-  m_SnakeModel_->setHighScore(m_gameInfo->high_score);
-  m_SnakeModel_->setSpeed(m_gameInfo->speed);
+  view_->Render(presenter_.Input(action));
 }
 
-void s21::TetrisController::printField(int** field, int x, int y, int w,
-                                       int h) {
-  if (field) {
-    QPainter painter(this);
-    for (int i = 0; i < h; ++i) {
-      for (int j = 0; j < w; ++j) {
-        if (field[i][j]) {
-          painter.setBrush(Qt::red);
-          painter.drawEllipse((x + j) * CELL_SIZE, (y + i) * CELL_SIZE,
-                              CELL_SIZE, CELL_SIZE);
-        }
-      }
-    }
-  }
-}
-
-void s21::TetrisController::increaseLevel() {
-  if (m_gameInfo->level < 10) {
-    m_gameInfo->speed -= 20;
-  }
-}
+}  // namespace s21
