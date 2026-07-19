@@ -1,39 +1,36 @@
-﻿#ifndef GAME_H
-#define GAME_H
+#ifndef S21_GUI_DESKTOP_CONTROLLER_SNAKE_CONTROLLER_H_
+#define S21_GUI_DESKTOP_CONTROLLER_SNAKE_CONTROLLER_H_
 
-#include <QKeyEvent>
-#include <QList>
-#include <QPainter>
+#include <QObject>
 #include <QTimer>
-#include <QWidget>
 
-#include "../../brick_game/snake/s21_snake_model.h"
-#include "../../interface.h"
+#include "../game_presenter.h"
+#include "../snake_view.h"
 
 namespace s21 {
-class SnakeController;
 
-class SnakeController : public QWidget {
+// Тонкий Qt-адаптер змейки: связывает dumb SnakeView с Qt-free
+// GamePresenter. Таймер продвигает игру, клавиши маппятся в UserAction_t —
+// вся логика (движение, рекорд, скорость) живёт в presenter/SnakeGame.
+class SnakeController : public QObject {
   Q_OBJECT
- public:
-  SnakeController(SnakeModel* m_SnakeModel);
-  ~SnakeController() = default;
 
- protected:
-  void paintEvent(QPaintEvent* e) override;
-  void keyPressEvent(QKeyEvent* e) override;
+ public:
+  explicit SnakeController(SnakeView* view, QObject* parent = nullptr);
+
+ signals:
+  void ExitToMenu();
+
+ private slots:
+  void OnTick();
+  void OnKey(int key);
 
  private:
-  int m_snakeItemSize;
-  QTimer* m_moveSnakeTimer;
-  SnakeModel* m_SnakeModel_;
-  UserAction_t user_action;
-  int dx = 1;
-  int dy = 0;
-  int prev_score = 0;
-
- public slots:
-  void MoveSnakeSlot();
+  SnakeView* view_;
+  GamePresenter presenter_;
+  QTimer timer_;
 };
+
 }  // namespace s21
-#endif  // GAME_H
+
+#endif  // S21_GUI_DESKTOP_CONTROLLER_SNAKE_CONTROLLER_H_

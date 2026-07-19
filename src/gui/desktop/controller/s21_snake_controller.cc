@@ -1,133 +1,70 @@
-﻿#include "s21_snake_controller.h"
+#include "s21_snake_controller.h"
 
-s21::SnakeController::SnakeController(SnakeModel* m_SnakeModel)
-    : m_SnakeModel_(m_SnakeModel) {
-  setFixedSize(CELL_SIZE * FIELD_WIDTH + 40, CELL_SIZE * FIELD_HEIGHT + 40);
-  setFocusPolicy(Qt::StrongFocus);  // РїРѕРґРєР»СЋС‡РµРЅРёРµ РєРЅРѕРїРѕРє
+#include <QKeyEvent>
+#include <memory>
 
-  m_snakeItemSize = CELL_SIZE;
-  m_moveSnakeTimer = new QTimer();
-  connect(m_moveSnakeTimer, &QTimer::timeout, this,
-          &SnakeController::MoveSnakeSlot);
-  m_moveSnakeTimer->start(
-      m_SnakeModel_->getSpeed());  // СЃРєРѕСЂРѕСЃС‚СЊ Р·РјРµР№РєРё
+#include "../../../brick_game/snake/snake_game.h"
+
+namespace s21 {
+
+SnakeController::SnakeController(SnakeView* view, QObject* parent)
+    : QObject(parent),
+      view_(view),
+      presenter_(std::make_unique<SnakeGame>(), "high_score_snake.txt") {
+  connect(view_, &SnakeView::KeyPressed, this, &SnakeController::OnKey);
+  connect(&timer_, &QTimer::timeout, this, &SnakeController::OnTick);
+
+  presenter_.Begin();
+  GameInfo_t info = presenter_.Tick();
+  view_->Render(info);
+  timer_.start(info.speed);
 }
 
-void s21::SnakeController::paintEvent(QPaintEvent* e) {
-  Q_UNUSED(e)
-  QPainter painter;
-  painter.begin(this);
+void SnakeController::OnTick() {
+  GameInfo_t info = presenter_.Tick();
+  view_->Render(info);
+  timer_.setInterval(info.speed);
+  if (presenter_.Finished()) {
+    timer_.stop();
+    const bool win = presenter_.State() == GameState::kWin;
+    view_->ShowMessage(win ? "YOU WIN" : "GAME OVER");
+  }
+}
 
-  if (user_action == Action) {
-    QFont font("Arial", 20, 250);
-    QFontMetrics fontMetrics(font);
-
-    int textWidth = fontMetrics.horizontalAdvance("Game Over");
-    int textHeight = fontMetrics.height();
-
-    QRect textRect(width() / 2 - textWidth / 2, height() / 2 - textHeight / 2,
-                   textWidth, textHeight);
-
-    painter.setFont(font);
-    painter.drawText(textRect, Qt::AlignHCenter | Qt::AlignVCenter,
-                     "Game Over");
-    m_moveSnakeTimer->stop();
+void SnakeController::OnKey(int key) {
+  const bool over = presenter_.Finished();
+  // Esc — выход в меню в любой момент; Enter — после проигрыша/победы.
+  const bool restart = over && (key == Qt::Key_Return || key == Qt::Key_Enter);
+  if (key == Qt::Key_Escape || restart) {
+    emit ExitToMenu();
     return;
   }
+  if (over) return;
 
-  painter.setBrush(Qt::white);
-  painter.setOpacity(0.5);
-  painter.drawRect(20, 20, width() - 40, height() - 20);
-
-  painter.setOpacity(1);
-  // СЂРёСЃСѓСЋ РіРѕР»РѕРІСѓ
-  painter.setBrush(Qt::red);
-  painter.drawEllipse(m_SnakeModel_->getHead().x * m_snakeItemSize,
-                      m_SnakeModel_->getHead().y * m_snakeItemSize,
-                      m_snakeItemSize, m_snakeItemSize);
-  // СЂРёСЃСѓСЋ С…РІРѕСЃС‚
-  painter.setBrush(Qt::cyan);
-  for (size_t i = 0; i < m_SnakeModel_->getTail().size(); i++) {
-    painter.drawEllipse(m_SnakeModel_->getTail()[i].x * m_snakeItemSize,
-                        m_SnakeModel_->getTail()[i].y * m_snakeItemSize,
-                        m_snakeItemSize, m_snakeItemSize);
-  }
-
-  // СЂРёСЃСѓСЋ СЏР±Р»РѕРєРѕ
-  painter.setBrush(Qt::red);
-  painter.drawEllipse(m_SnakeModel_->getApple().x * m_snakeItemSize,
-                      m_SnakeModel_->getApple().y * m_snakeItemSize,
-                      m_snakeItemSize, m_snakeItemSize);
-
-  painter.end();
-}
-
-void s21::SnakeController::keyPressEvent(QKeyEvent* e) {
-  if (e->key() == Qt::Key_Left) {
-    user_action = Left;
-  }
-  if (e->key() == Qt::Key_Right) {
-    user_action = Right;
-  }
-  if (e->key() == Qt::Key_Up) {
-    user_action = Up;
-  }
-  if (e->key() == Qt::Key_Down) {
-    user_action = Down;
-  }
-  if (e->key() == Qt::Key_Space) {
-    user_action = Pause;
-  }
-}
-
-void s21::SnakeController::MoveSnakeSlot() {
-  switch (user_action) {
-    case Left:
-      if (dx != 1) {
-        // РћР±СЂР°Р±РѕС‚РєР° РЅР°Р¶Р°С‚РёСЏ РєР»Р°РІРёС€Рё "Р’Р»РµРІРѕ"
-        dx = -1;
-        dy = 0;
-      }
+  UserAction_t action;
+  switch (key) {
+    case Qt::Key_Left:
+      action = Left;
       break;
-    case Right:
-      if (dx != -1) {
-        // РћР±СЂР°Р±РѕС‚РєР° РЅР°Р¶Р°С‚РёСЏ РєР»Р°РІРёС€Рё "Р’РїСЂР°РІРѕ"
-        dx = 1;
-        dy = 0;
-      }
+    case Qt::Key_Right:
+      action = Right;
       break;
-    case Up:
-      if (dy != 1) {
-        // РћР±СЂР°Р±РѕС‚РєР° РЅР°Р¶Р°С‚РёСЏ РєР»Р°РІРёС€Рё "Р’РІРµСЂС…"
-        dx = 0;
-        dy = -1;
-      }
+    case Qt::Key_Up:
+      action = Up;
       break;
-    case Down:
-      if (dy != -1) {
-        // РћР±СЂР°Р±РѕС‚РєР° РЅР°Р¶Р°С‚РёСЏ РєР»Р°РІРёС€Рё "Р’РЅРёР·"
-        dx = 0;
-        dy = 1;
-      }
+    case Qt::Key_Down:
+      action = Down;
       break;
-    case Pause:
-      return;
+    case Qt::Key_Space:
+      action = Pause;
+      break;
+    case Qt::Key_Z:
+      action = Action;
       break;
     default:
-      break;
+      return;
   }
-
-  if (m_SnakeModel_->moveSnake(dx, dy)) {
-  } else {
-    user_action = Action;
-  }
-
-  if (m_SnakeModel_->getEatenApples() % 5 == 0 &&
-      m_SnakeModel_->getEatenApples() != prev_score) {
-    m_SnakeModel_->increaseLevel();
-    prev_score = m_SnakeModel_->getEatenApples();
-  }
-
-  m_moveSnakeTimer->start(m_SnakeModel_->getSpeed());
-  repaint();
+  view_->Render(presenter_.Input(action));
 }
+
+}  // namespace s21

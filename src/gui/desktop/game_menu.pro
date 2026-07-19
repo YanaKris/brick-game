@@ -10,6 +10,10 @@ CONFIG += c++17
 
 SOURCES += \
     ../../brick_game/snake/s21_snake_model.cc \
+    ../../brick_game/snake/snake_game.cc \
+    ../../brick_game/common/high_score.cc \
+    game_presenter.cc \
+    snake_view.cc \
     controller/s21_snake_controller.cc \
     controller/s21_tetris_controller.cc \
     ../../brick_game/tetris/tetris.c \
@@ -19,6 +23,10 @@ SOURCES += \
 
 HEADERS += \
     ../../brick_game/snake/s21_snake_model.h \
+    ../../brick_game/snake/snake_game.h \
+    ../../brick_game/common/high_score.h \
+    game_presenter.h \
+    snake_view.h \
     controller/s21_snake_controller.h \
     controller/s21_tetris_controller.h \
     ../../brick_game/tetris/tetris.h \
