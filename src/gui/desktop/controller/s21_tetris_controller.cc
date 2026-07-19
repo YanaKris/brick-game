@@ -50,7 +50,7 @@ void TetrisController::OnKey(int key) {
       action = Down;
       break;
     case Qt::Key_Up:
-      action = Action; 
+      action = Action;
       break;
     case Qt::Key_Space:
       action = Pause;

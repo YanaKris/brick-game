@@ -16,7 +16,8 @@ class TetrisView : public QWidget {
   explicit TetrisView(QWidget* parent = nullptr);
 
   void Render(const GameInfo_t& info);
-  void ShowMessage(const QString& message); 
+  void ShowMessage(const QString& message);
+
  signals:
   void KeyPressed(int key);
 
