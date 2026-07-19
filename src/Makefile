@@ -122,8 +122,12 @@ gcov_report:
 	genhtml coverage.info --output-directory report --ignore-errors inconsistent
 	@echo "Coverage report generated: report/index.html"
 
-valgrind: test_snake
+valgrind: test_snake test_common test_tetris test_api test_desktop
 	valgrind --leak-check=full --error-exitcode=1 ./test_snake
+	valgrind --leak-check=full --error-exitcode=1 ./test_common
+	valgrind --leak-check=full --error-exitcode=1 ./test_tetris
+	valgrind --leak-check=full --error-exitcode=1 ./test_api
+	valgrind --leak-check=full --error-exitcode=1 ./test_desktop
 
 # --- code style (Google, config in src/.clang-format) ---
 style:
