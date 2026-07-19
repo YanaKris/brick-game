@@ -15,6 +15,7 @@ SOURCES += \
     ../../brick_game/tetris/tetromino.cc \
     ../../brick_game/tetris/tetris_game.cc \
     ../../brick_game/common/high_score.cc \
+    ../../brick_game/common/game_factory.cc \
     game_presenter.cc \
     snake_view.cc \
     tetris_view.cc \
@@ -30,6 +31,7 @@ HEADERS += \
     ../../brick_game/tetris/tetromino.h \
     ../../brick_game/tetris/tetris_game.h \
     ../../brick_game/common/high_score.h \
+    ../../brick_game/common/game_factory.h \
     game_presenter.h \
     snake_view.h \
     tetris_view.h \

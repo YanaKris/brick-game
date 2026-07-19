@@ -161,3 +161,4 @@ src/gui/desktop/moc_*.cpp
 src/gui/desktop/ui_*.h
 src/gui/desktop/game_menu
 src/gui/desktop/high_score_snake.txt
+src/gui/desktop/record.txt

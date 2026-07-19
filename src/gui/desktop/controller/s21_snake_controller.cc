@@ -1,16 +1,15 @@
 #include "s21_snake_controller.h"
 
 #include <QKeyEvent>
-#include <memory>
 
-#include "../../../brick_game/snake/snake_game.h"
+#include "../../../brick_game/common/game_factory.h"
 
 namespace s21 {
 
 SnakeController::SnakeController(SnakeView* view, QObject* parent)
     : QObject(parent),
       view_(view),
-      presenter_(std::make_unique<SnakeGame>(), "high_score_snake.txt") {
+      presenter_(GameFactory::Make(kSnake), "high_score_snake.txt") {
   connect(view_, &SnakeView::KeyPressed, this, &SnakeController::OnKey);
   connect(&timer_, &QTimer::timeout, this, &SnakeController::OnTick);
 

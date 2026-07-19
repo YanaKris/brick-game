@@ -1,16 +1,15 @@
 #include "s21_tetris_controller.h"
 
 #include <QKeyEvent>
-#include <memory>
 
-#include "../../../brick_game/tetris/tetris_game.h"
+#include "../../../brick_game/common/game_factory.h"
 
 namespace s21 {
 
 TetrisController::TetrisController(TetrisView* view, QObject* parent)
     : QObject(parent),
       view_(view),
-      presenter_(std::make_unique<TetrisGame>(), "record.txt") {
+      presenter_(GameFactory::Make(kTetris), "record.txt") {
   connect(view_, &TetrisView::KeyPressed, this, &TetrisController::OnKey);
   connect(&timer_, &QTimer::timeout, this, &TetrisController::OnTick);
 
