@@ -1,5 +1,5 @@
-#ifndef S21_GUI_DESKTOP_SNAKE_VIEW_H_
-#define S21_GUI_DESKTOP_SNAKE_VIEW_H_
+#ifndef S21_GUI_DESKTOP_TETRIS_VIEW_H_
+#define S21_GUI_DESKTOP_TETRIS_VIEW_H_
 
 #include <QKeyEvent>
 #include <QString>
@@ -9,15 +9,14 @@
 
 namespace s21 {
 
-class SnakeView : public QWidget {
+class TetrisView : public QWidget {
   Q_OBJECT
 
  public:
-  explicit SnakeView(QWidget* parent = nullptr);
+  explicit TetrisView(QWidget* parent = nullptr);
 
   void Render(const GameInfo_t& info);
-  void ShowMessage(const QString& message);
-
+  void ShowMessage(const QString& message); 
  signals:
   void KeyPressed(int key);
 
@@ -32,4 +31,4 @@ class SnakeView : public QWidget {
 
 }  // namespace s21
 
-#endif  // S21_GUI_DESKTOP_SNAKE_VIEW_H_
+#endif  // S21_GUI_DESKTOP_TETRIS_VIEW_H_

@@ -9,9 +9,6 @@
 
 namespace s21 {
 
-// Тонкий Qt-адаптер змейки: связывает dumb SnakeView с Qt-free
-// GamePresenter. Таймер продвигает игру, клавиши маппятся в UserAction_t —
-// вся логика (движение, рекорд, скорость) живёт в presenter/SnakeGame.
 class SnakeController : public QObject {
   Q_OBJECT
 

@@ -33,7 +33,6 @@ void SnakeController::OnTick() {
 
 void SnakeController::OnKey(int key) {
   const bool over = presenter_.Finished();
-  // Esc — выход в меню в любой момент; Enter — после проигрыша/победы.
   const bool restart = over && (key == Qt::Key_Return || key == Qt::Key_Enter);
   if (key == Qt::Key_Escape || restart) {
     emit ExitToMenu();
