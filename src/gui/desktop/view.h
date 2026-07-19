@@ -30,7 +30,6 @@ class View : public QMainWindow {
   void ReturnToMenu();
 
  private:
-
   void ShowGameScreen(QWidget* screen);
 
   Ui::View* ui;
@@ -40,7 +39,7 @@ class View : public QMainWindow {
   TetrisController* m_TetrisController;
   QWidget* m_centralWidget;
   QGridLayout* m_gridLayout;
-  QWidget* m_menu = nullptr; 
+  QWidget* m_menu = nullptr;
 };
 }  // namespace s21
 #endif  // MAINWINDOW_H

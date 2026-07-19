@@ -49,7 +49,6 @@ void TetrisView::paintEvent(QPaintEvent* event) {
     }
   }
 
-
   const int px = kMargin + field_w + 20;
   painter.setPen(Qt::black);
   painter.setFont(QFont("Arial", 11, QFont::Bold));
