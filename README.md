@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/YanaKris/brick-game/actions/workflows/ci.yml/badge.svg)](https://github.com/YanaKris/brick-game/actions/workflows/ci.yml)
 
+**▶ [Играть онлайн](https://yanakris.github.io/brick-game/)** — веб-версия на WebAssembly (Emscripten),
+собирается из того же ядра и публикуется на GitHub Pages.
+
 Проект реализует игру «Змейка» на C++17 в объектно-ориентированной парадигме и объединяет её с
 ранее написанным «Тетрисом» (на C) в единый набор из двух интерфейсов: консольного (ncurses) и
 десктопного (Qt). Логика игры вынесена в отдельную библиотеку, интерфейсы подключаются к ней через
@@ -14,6 +17,8 @@
   и «Змейку», и «Тетрис».
 - Консольный интерфейс на **ncurses** (`src/gui/cli`), перенесённый из BrickGame v1.0 и дополненный
   поддержкой «Змейки».
+- Веб-версия на **WebAssembly** (`src/gui/web`): то же ядро через Emscripten, интерфейс на HTML5 Canvas,
+  публикация на GitHub Pages (`make web`).
 - «Тетрис» из BrickGame v1.0 (реализация на C, `src/brick_game/tetris`) подключён к обоим интерфейсам.
 - Единый API `userInput` / `updateCurrentState` и общие структуры данных в `src/interface.h`.
 - Формализация логики через конечный автомат; диаграммы состояний приложены

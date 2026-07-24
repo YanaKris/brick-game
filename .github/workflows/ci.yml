@@ -75,3 +75,34 @@ jobs:
           sudo find /tmp/gtest -name '*.a' -exec cp {} /usr/lib \;
       - name: Valgrind (make valgrind)
         run: make -C src valgrind
+
+  web-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+      - name: Build WASM (make web)
+        run: make -C src web
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: src/gui/web
+
+  deploy-pages:
+    needs: web-build
+    if: github.ref == 'refs/heads/release-v1' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
