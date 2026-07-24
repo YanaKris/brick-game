@@ -147,6 +147,7 @@ src/test_common
 src/test_tetris
 src/test_api
 src/test_desktop
+src/test_web
 src/gcov_test
 src/testing
 src/main
