@@ -45,7 +45,7 @@ FORMAT_FILES = interface.h \
 	gui/desktop/controller/*.cc gui/desktop/controller/*.h \
 	tests/*.cc
 
-.PHONY: all cli run install uninstall clean dvi dist \
+.PHONY: all cli run web install uninstall clean dvi dist \
         test test_snake test_common test_tetris test_api test_desktop test_web \
         gcov_report style format valgrind
 
@@ -72,6 +72,23 @@ install:
 
 uninstall:
 	rm -rf build/
+
+# --- web (WebAssembly via Emscripten) ---
+# Требует emcc (emsdk) в PATH — локально может отсутствовать, сборку делает CI.
+# Ядро игры + мост -> gui/web/brickgame.{js,wasm} рядом с index.html/web_view.js;
+# всё это раздаётся как статика GitHub Pages.
+EMCC         = emcc
+WEB_DIR      = gui/web
+WEB_SRC      = $(WEB_BRIDGE_CC) $(API_CC) $(FACTORY_CC) $(SNAKE_CC) $(TETRIS_CC)
+EMCC_EXPORTS = _web_start,_web_input,_web_tick,_web_field_ptr,_web_next_ptr,_web_score,_web_high_score,_web_level,_web_speed,_web_pause,_web_finished,_web_state,_web_set_high_score
+
+web:
+	$(EMCC) -std=c++17 -O2 $(WEB_SRC) \
+		-sMODULARIZE=1 -sEXPORT_NAME=BrickGameModule \
+		-sEXPORTED_FUNCTIONS=$(EMCC_EXPORTS) \
+		-sEXPORTED_RUNTIME_METHODS=ccall,cwrap,getValue \
+		-sALLOW_MEMORY_GROWTH=1 -sENVIRONMENT=web \
+		-o $(WEB_DIR)/brickgame.js
 
 # --- tests (GoogleTest) ---
 test: test_snake test_common test_tetris test_api test_desktop test_web
@@ -162,4 +179,5 @@ clean:
 	rm -f $(BIN) main tetris snake test test_snake test_common test_tetris \
 		test_api test_desktop test_web testing gcov_test
 	rm -f *.tar.gz
+	rm -f $(WEB_DIR)/brickgame.js $(WEB_DIR)/brickgame.wasm
 	rm -rf *.dSYM

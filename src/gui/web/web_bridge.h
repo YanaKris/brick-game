@@ -21,6 +21,8 @@ int web_high_score(void);
 int web_level(void);
 int web_speed(void);
 int web_pause(void);
+int web_finished(void);
+int web_state(void);
 
 void web_set_high_score(int value);
 

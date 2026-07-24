@@ -59,6 +59,9 @@ WEB_EXPORT int web_level(void) { return g_level; }
 WEB_EXPORT int web_speed(void) { return g_speed; }
 WEB_EXPORT int web_pause(void) { return g_pause; }
 
+WEB_EXPORT int web_finished(void) { return gameFinished(); }
+WEB_EXPORT int web_state(void) { return gameState(); }
+
 WEB_EXPORT void web_set_high_score(int value) { g_record = value; }
 
 }  // extern "C"

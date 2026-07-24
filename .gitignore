@@ -154,6 +154,10 @@ src/main
 src/tetris
 src/snake
 
+# Web (Emscripten) build artifacts
+src/gui/web/brickgame.js
+src/gui/web/brickgame.wasm
+
 # Qt desktop build artifacts (qmake / make / moc / uic / runtime)
 src/gui/desktop/Makefile
 src/gui/desktop/.qmake.stash

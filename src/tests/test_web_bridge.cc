@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "../brick_game/common/field_buffer.h"
+#include "../brick_game/common/fsm.h"
 #include "../gui/web/web_bridge.h"
 
 namespace {
@@ -78,6 +79,18 @@ TEST(WebBridgeTest, NextPointerIsValid) {
   web_input(Start, 0);
   web_tick();
   EXPECT_NE(web_next_ptr(), nullptr);
+}
+
+TEST(WebBridgeTest, SnakeFinishesAfterTerminate) {
+  web_start(kSnake);
+  web_input(Start, 0);
+  web_tick();
+  EXPECT_EQ(web_finished(), 0);
+  EXPECT_EQ(web_state(), static_cast<int>(s21::GameState::kMoving));
+
+  web_input(Terminate, 0);
+  EXPECT_EQ(web_finished(), 1);
+  EXPECT_EQ(web_state(), static_cast<int>(s21::GameState::kGameOver));
 }
 
 }  // namespace
