@@ -25,3 +25,7 @@ void userInput(UserAction_t action, bool hold) {
 GameInfo_t updateCurrentState() {
   return CurrentGamePtr()->updateCurrentState();
 }
+
+int gameFinished() { return CurrentGamePtr()->finished() ? 1 : 0; }
+
+int gameState() { return static_cast<int>(CurrentGamePtr()->state()); }

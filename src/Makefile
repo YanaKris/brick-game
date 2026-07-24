@@ -28,6 +28,7 @@ TICK_TIMER_CC = gui/cli/tick_timer.cc
 CLI_CC   = gui/cli/main.cc gui/cli/cli_view.cc gui/cli/cli_controller.cc \
 	gui/cli/cli_input.cc $(TICK_TIMER_CC)
 API_CC   = api/game_api.cc
+WEB_BRIDGE_CC = gui/web/web_bridge.cc
 # Desktop MVP core: Qt-free presenter (unit-tested without Qt).
 DESKTOP_CORE_CC = gui/desktop/game_presenter.cc
 BIN      = brickgame
@@ -39,12 +40,13 @@ FORMAT_FILES = interface.h \
 	brick_game/snake/*.cc brick_game/snake/*.h \
 	brick_game/tetris/*.c brick_game/tetris/*.cc brick_game/tetris/*.h \
 	gui/cli/*.cc gui/cli/*.h \
+	gui/web/*.cc gui/web/*.h \
 	gui/desktop/*.cc gui/desktop/*.h \
 	gui/desktop/controller/*.cc gui/desktop/controller/*.h \
 	tests/*.cc
 
-.PHONY: all cli run install uninstall clean dvi dist \
-        test test_snake test_common test_tetris test_api test_desktop \
+.PHONY: all cli run web install uninstall clean dvi dist \
+        test test_snake test_common test_tetris test_api test_desktop test_web \
         gcov_report style format valgrind
 
 # Default: build only, do NOT run.
@@ -71,8 +73,25 @@ install:
 uninstall:
 	rm -rf build/
 
+# --- web (WebAssembly via Emscripten) ---
+# Требует emcc (emsdk) в PATH — локально может отсутствовать, сборку делает CI.
+# Ядро игры + мост -> gui/web/brickgame.{js,wasm} рядом с index.html/web_view.js;
+# всё это раздаётся как статика GitHub Pages.
+EMCC         = emcc
+WEB_DIR      = gui/web
+WEB_SRC      = $(WEB_BRIDGE_CC) $(API_CC) $(FACTORY_CC) $(SNAKE_CC) $(TETRIS_CC)
+EMCC_EXPORTS = _web_start,_web_input,_web_tick,_web_field_ptr,_web_next_ptr,_web_score,_web_high_score,_web_level,_web_speed,_web_pause,_web_finished,_web_state,_web_set_high_score
+
+web:
+	$(EMCC) -std=c++17 -O2 $(WEB_SRC) \
+		-sMODULARIZE=1 -sEXPORT_NAME=BrickGameModule \
+		-sEXPORTED_FUNCTIONS=$(EMCC_EXPORTS) \
+		-sEXPORTED_RUNTIME_METHODS=ccall,cwrap,getValue \
+		-sALLOW_MEMORY_GROWTH=1 -sENVIRONMENT=web \
+		-o $(WEB_DIR)/brickgame.js
+
 # --- tests (GoogleTest) ---
-test: test_snake test_common test_tetris test_api test_desktop
+test: test_snake test_common test_tetris test_api test_desktop test_web
 
 # Snake tests: model (pure logic) + SnakeGame facade/FSM. No ncurses linked.
 test_snake:
@@ -106,14 +125,21 @@ test_desktop:
 		$(SNAKE_CC) $(HIGH_SCORE_CC) $(LDGTEST) -o test_desktop
 	./test_desktop
 
+# Web bridge tests: int** field -> flat buffer + record passthrough over the
+# public API. Native build (no Emscripten) — pure logic behind the WASM view.
+test_web:
+	$(CXX) $(CXXFLAGS) tests/test_web_bridge.cc $(WEB_BRIDGE_CC) $(API_CC) \
+		$(FACTORY_CC) $(SNAKE_CC) $(TETRIS_CC) $(LDGTEST) -o test_web
+	./test_web
+
 # Coverage over the unit-tested translation units only (not the ncurses/Qt front-ends).
 gcov_report:
 	$(CC) $(CFLAGS) $(GCOV_FLAGS) -c $(TETRIS_C) -o tetris_legacy.o
 	$(CXX) $(CXXFLAGS) $(GCOV_FLAGS) tests/tests.cc tests/test_snake_fsm.cc \
 		tests/test_common.cc tests/test_tetris.cc tests/test_game_api.cc \
-		tests/test_desktop_presenter.cc \
+		tests/test_desktop_presenter.cc tests/test_web_bridge.cc \
 		$(SNAKE_CC) $(TETRIS_CC) $(API_CC) $(COMMON_CC) $(TICK_TIMER_CC) \
-		$(DESKTOP_CORE_CC) tetris_legacy.o $(LDGTEST) -o gcov_test
+		$(DESKTOP_CORE_CC) $(WEB_BRIDGE_CC) tetris_legacy.o $(LDGTEST) -o gcov_test
 	./gcov_test
 	lcov --capture --directory . --output-file coverage.info --no-external \
 		--ignore-errors inconsistent,mismatch
@@ -122,12 +148,13 @@ gcov_report:
 	genhtml coverage.info --output-directory report --ignore-errors inconsistent
 	@echo "Coverage report generated: report/index.html"
 
-valgrind: test_snake test_common test_tetris test_api test_desktop
+valgrind: test_snake test_common test_tetris test_api test_desktop test_web
 	valgrind --leak-check=full --error-exitcode=1 ./test_snake
 	valgrind --leak-check=full --error-exitcode=1 ./test_common
 	valgrind --leak-check=full --error-exitcode=1 ./test_tetris
 	valgrind --leak-check=full --error-exitcode=1 ./test_api
 	valgrind --leak-check=full --error-exitcode=1 ./test_desktop
+	valgrind --leak-check=full --error-exitcode=1 ./test_web
 
 # --- code style (Google, config in src/.clang-format) ---
 style:
@@ -150,6 +177,7 @@ dist:
 clean:
 	rm -rf *.o *.info *.gcda *.gcno *.gcov report/ build/ dist/
 	rm -f $(BIN) main tetris snake test test_snake test_common test_tetris \
-		test_api test_desktop testing gcov_test
+		test_api test_desktop test_web testing gcov_test
 	rm -f *.tar.gz
+	rm -f $(WEB_DIR)/brickgame.js $(WEB_DIR)/brickgame.wasm
 	rm -rf *.dSYM
