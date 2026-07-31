@@ -80,7 +80,7 @@ uninstall:
 EMCC         = emcc
 WEB_DIR      = gui/web
 WEB_SRC      = $(WEB_BRIDGE_CC) $(API_CC) $(FACTORY_CC) $(SNAKE_CC) $(TETRIS_CC)
-EMCC_EXPORTS = _web_start,_web_input,_web_tick,_web_field_ptr,_web_next_ptr,_web_score,_web_high_score,_web_level,_web_speed,_web_pause,_web_finished,_web_state,_web_set_high_score
+EMCC_EXPORTS = _web_start,_web_input,_web_tick,_web_render,_web_field_ptr,_web_next_ptr,_web_score,_web_high_score,_web_level,_web_speed,_web_pause,_web_finished,_web_state,_web_set_high_score
 
 web:
 	$(EMCC) -std=c++17 -O2 $(WEB_SRC) \

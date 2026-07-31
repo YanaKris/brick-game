@@ -93,4 +93,41 @@ TEST(WebBridgeTest, SnakeFinishesAfterTerminate) {
   EXPECT_EQ(web_state(), static_cast<int>(s21::GameState::kGameOver));
 }
 
+TEST(WebBridgeTest, RenderDoesNotAdvance) {
+  web_start(kTetris);
+  web_input(Start, 0);
+  web_tick();  // фигура заспавнена, наверху поля
+
+  int before[kCells];
+  for (int i = 0; i < kCells; ++i) before[i] = web_field_ptr()[i];
+
+  web_render();  // render не двигает игру — кадр идентичен
+  bool same = true;
+  for (int i = 0; i < kCells; ++i)
+    if (web_field_ptr()[i] != before[i]) same = false;
+  EXPECT_TRUE(same);
+
+  web_tick();  // а тик двигает: фигура падает — поле меняется
+  bool changed = false;
+  for (int i = 0; i < kCells; ++i)
+    if (web_field_ptr()[i] != before[i]) changed = true;
+  EXPECT_TRUE(changed);
+}
+
+TEST(WebBridgeTest, RenderReflectsInputWithoutAdvancing) {
+  web_start(kTetris);
+  web_input(Start, 0);
+  web_tick();  // фигура на спавне (col=3)
+
+  int before[kCells];
+  for (int i = 0; i < kCells; ++i) before[i] = web_field_ptr()[i];
+
+  web_input(Left, 0);  // модель сдвигает фигуру влево
+  web_render();        // сдвиг должен быть виден сразу, без тика
+  bool changed = false;
+  for (int i = 0; i < kCells; ++i)
+    if (web_field_ptr()[i] != before[i]) changed = true;
+  EXPECT_TRUE(changed);
+}
+
 }  // namespace

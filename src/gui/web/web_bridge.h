@@ -12,6 +12,7 @@ extern "C" {
 void web_start(int game);
 void web_input(int action, int hold);
 void web_tick(void);
+void web_render(void);
 
 int* web_field_ptr(void);
 int* web_next_ptr(void);

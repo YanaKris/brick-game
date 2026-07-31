@@ -29,3 +29,5 @@ GameInfo_t updateCurrentState() {
 int gameFinished() { return CurrentGamePtr()->finished() ? 1 : 0; }
 
 int gameState() { return static_cast<int>(CurrentGamePtr()->state()); }
+
+GameInfo_t renderCurrentState() { return CurrentGamePtr()->render(); }

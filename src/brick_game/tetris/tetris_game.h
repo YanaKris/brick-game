@@ -30,6 +30,7 @@ class TetrisGame : public IGame {
 
   void userInput(UserAction_t action, bool hold) override;
   GameInfo_t updateCurrentState() override;
+  GameInfo_t render() override;
   GameState state() const override;
   bool finished() const override;
 

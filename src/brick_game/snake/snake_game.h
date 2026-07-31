@@ -8,11 +8,8 @@
 
 namespace s21 {
 
-// События FSM змейки; таблица переходов — в snake_game.cc.
 enum class SnakeEvent { kStartPressed, kPauseToggled, kCrashed, kWon };
 
-// Фасад IGame над SnakeModel + FSM: держит направление движения,
-// паузу, ускорение по Action и собирает GameInfo_t для фронтендов.
 class SnakeGame : public IGame {
  public:
   SnakeGame();
@@ -20,22 +17,21 @@ class SnakeGame : public IGame {
 
   void userInput(UserAction_t action, bool hold) override;
   GameInfo_t updateCurrentState() override;
+  GameInfo_t render() override;
   GameState state() const override;
   bool finished() const override;
 
  private:
   void HandleTurn(int dx, int dy);
   void Tick();
-  GameInfo_t MakeInfo();
+  GameInfo_t BuildInfo();
 
   SnakeModel model_;
   Fsm<SnakeEvent> fsm_;
   FieldBuffer field_;
-  FieldBuffer next_;  // змейке не нужен, но контракт требует валидный next
+  FieldBuffer next_;  
   int dx_ = 1;
   int dy_ = 0;
-  // Направление последнего выполненного хода: развороты проверяются
-  // против него, иначе два ввода между тиками дают разворот на 180°.
   int moved_dx_ = 1;
   int moved_dy_ = 0;
   bool accelerated_ = false;

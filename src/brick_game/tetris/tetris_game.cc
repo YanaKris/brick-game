@@ -65,6 +65,8 @@ GameInfo_t TetrisGame::updateCurrentState() {
   return MakeInfo();
 }
 
+GameInfo_t TetrisGame::render() { return MakeInfo(); }
+
 GameState TetrisGame::state() const { return fsm_.state(); }
 
 bool TetrisGame::finished() const {

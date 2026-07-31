@@ -168,6 +168,11 @@ class FakeGame : public IGame {
     info.score = 7;
     return info;
   }
+  GameInfo_t render() override {
+    GameInfo_t info{};
+    info.score = 7;
+    return info;
+  }
   GameState state() const override { return GameState::kMoving; }
   bool finished() const override { return false; }
 
