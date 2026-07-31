@@ -39,10 +39,12 @@ class TetrisGame : public IGame {
   void Tick();
   void HandleLanding();
   void RefreshField();
+  void RefreshNext();
   GameInfo_t MakeInfo();
 
   TetrisModel model_;
   FigureGenerator generator_;
+  std::unique_ptr<Tetromino> next_figure_;
   Fsm<TetrisEvent> fsm_;
   FieldBuffer field_;
   FieldBuffer next_;

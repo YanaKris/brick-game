@@ -29,7 +29,7 @@ class SnakeGame : public IGame {
   SnakeModel model_;
   Fsm<SnakeEvent> fsm_;
   FieldBuffer field_;
-  FieldBuffer next_;  
+  FieldBuffer next_;
   int dx_ = 1;
   int dy_ = 0;
   int moved_dx_ = 1;

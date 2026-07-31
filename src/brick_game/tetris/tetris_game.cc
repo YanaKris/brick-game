@@ -31,7 +31,9 @@ TetrisGame::TetrisGame(FigureGenerator generator)
 TetrisGame::TetrisGame(TetrisModel model, FigureGenerator generator)
     : model_(std::move(model)),
       generator_(std::move(generator)),
-      fsm_(MakeTetrisFsm()) {}
+      fsm_(MakeTetrisFsm()) {
+  next_figure_ = generator_();
+}
 
 void TetrisGame::userInput(UserAction_t action, bool) {
   switch (action) {
@@ -77,11 +79,12 @@ bool TetrisGame::Moving() const { return fsm_.state() == GameState::kMoving; }
 
 void TetrisGame::Tick() {
   if (fsm_.state() == GameState::kSpawn) {
-    if (model_.Spawn(generator_())) {
+    if (model_.Spawn(std::move(next_figure_))) {
       fsm_.Dispatch(TetrisEvent::kSpawned);
     } else {
       fsm_.Dispatch(TetrisEvent::kSpawnBlocked);
     }
+    next_figure_ = generator_();
     return;
   }
   if (!Moving()) return;
@@ -103,8 +106,20 @@ void TetrisGame::RefreshField() {
   }
 }
 
+void TetrisGame::RefreshNext() {
+  next_.Clear();
+  if (next_figure_ == nullptr) return;
+  const Tetromino::Matrix& shape = next_figure_->matrix();
+  for (int r = 0; r < kTetrominoSize; ++r) {
+    for (int c = 0; c < kTetrominoSize; ++c) {
+      if (shape[r][c]) next_.data()[r][c] = shape[r][c];
+    }
+  }
+}
+
 GameInfo_t TetrisGame::MakeInfo() {
   RefreshField();
+  RefreshNext();
   GameInfo_t info{};
   info.field = field_.data();
   info.next = next_.data();

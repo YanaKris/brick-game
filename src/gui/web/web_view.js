@@ -25,6 +25,8 @@
   var elHigh = document.getElementById('high');
   var elLevel = document.getElementById('level');
   var elStatus = document.getElementById('status');
+  var nextCanvas = document.getElementById('next');
+  var nextCtx = nextCanvas ? nextCanvas.getContext('2d') : null;
 
   var Mod = null;
   var api = null;
@@ -51,6 +53,7 @@
       tick: Module.cwrap('web_tick', null, []),
       render: Module.cwrap('web_render', null, []),
       fieldPtr: Module.cwrap('web_field_ptr', 'number', []),
+      nextPtr: Module.cwrap('web_next_ptr', 'number', []),
       score: Module.cwrap('web_score', 'number', []),
       high: Module.cwrap('web_high_score', 'number', []),
       level: Module.cwrap('web_level', 'number', []),
@@ -82,6 +85,21 @@
     elScore.textContent = api.score();
     elHigh.textContent = api.high();
     elLevel.textContent = api.level();
+    drawNext();
+  }
+
+  function drawNext() {
+    if (!nextCtx) return;
+    var ptr = api.nextPtr();
+    nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+    for (var r = 0; r < 4; r++) {
+      for (var c = 0; c < 4; c++) {
+        var v = Mod.getValue(ptr + (r * W + c) * 4, 'i32');
+        if (!v) continue;
+        nextCtx.fillStyle = COLORS[v] || COLORS[1];
+        nextCtx.fillRect(c * 20 + 1, r * 20 + 1, 18, 18);
+      }
+    }
   }
 
   function persistHi() {
