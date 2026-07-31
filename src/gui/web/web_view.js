@@ -146,6 +146,9 @@
       return;
     }
     var action = KEYS[e.key];
+    // В тетрисе поворот — это Action (модель игнорирует Up): стрелка вверх
+    // вращает фигуру. В змейке Up остаётся поворотом вверх.
+    if (e.key === 'ArrowUp' && current === TETRIS) action = A.Action;
     if (action === undefined) return;
     e.preventDefault();
     api.input(action, 0); // ввод не двигает игру — перерисуется на ближайшем тике
