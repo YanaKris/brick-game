@@ -38,6 +38,9 @@
       cursor: pointer;
     }
     .controls button:hover { background: #30363d; }
+    .next-box { margin-bottom: 1rem; }
+    .next-label { display: block; color: #8b949e; font-size: .85rem; margin-bottom: .35rem; }
+    #next { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; }
     .stats { display: grid; grid-template-columns: auto auto; gap: .25rem .75rem; margin: 0 0 1rem; }
     .stats dt { color: #8b949e; }
     .stats dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
@@ -55,6 +58,10 @@
         <div class="controls">
           <button id="btn-tetris" type="button">Тетрис</button>
           <button id="btn-snake" type="button">Змейка</button>
+        </div>
+        <div class="next-box">
+          <span class="next-label">Следующая</span>
+          <canvas id="next" width="80" height="80"></canvas>
         </div>
         <dl class="stats">
           <dt>Счёт</dt><dd id="score">0</dd>

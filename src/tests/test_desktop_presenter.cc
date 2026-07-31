@@ -45,6 +45,13 @@ class ScriptedGame : public IGame {
     return info;
   }
 
+  GameInfo_t render() override {
+    GameInfo_t info{};
+    if (!steps_.empty())
+      info.score = steps_[std::min(index_, steps_.size() - 1)].score;
+    return info;
+  }
+
   GameState state() const override { return GameState::kMoving; }
   bool finished() const override { return finished_; }
 

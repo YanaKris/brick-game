@@ -93,4 +93,41 @@ TEST(WebBridgeTest, SnakeFinishesAfterTerminate) {
   EXPECT_EQ(web_state(), static_cast<int>(s21::GameState::kGameOver));
 }
 
+TEST(WebBridgeTest, RenderDoesNotAdvance) {
+  web_start(kTetris);
+  web_input(Start, 0);
+  web_tick();
+
+  int before[kCells];
+  for (int i = 0; i < kCells; ++i) before[i] = web_field_ptr()[i];
+
+  web_render();
+  bool same = true;
+  for (int i = 0; i < kCells; ++i)
+    if (web_field_ptr()[i] != before[i]) same = false;
+  EXPECT_TRUE(same);
+
+  web_tick();
+  bool changed = false;
+  for (int i = 0; i < kCells; ++i)
+    if (web_field_ptr()[i] != before[i]) changed = true;
+  EXPECT_TRUE(changed);
+}
+
+TEST(WebBridgeTest, RenderReflectsInputWithoutAdvancing) {
+  web_start(kTetris);
+  web_input(Start, 0);
+  web_tick();
+
+  int before[kCells];
+  for (int i = 0; i < kCells; ++i) before[i] = web_field_ptr()[i];
+
+  web_input(Left, 0);
+  web_render();
+  bool changed = false;
+  for (int i = 0; i < kCells; ++i)
+    if (web_field_ptr()[i] != before[i]) changed = true;
+  EXPECT_TRUE(changed);
+}
+
 }  // namespace

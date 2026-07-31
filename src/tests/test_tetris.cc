@@ -150,7 +150,7 @@ TEST(LegacyTetrisTest, MoveLeftStopsAtWall) {
   for (int step = 0; step < 3; ++step) tetrinoMoveLeft(game.get(), &fig);
   EXPECT_EQ(fig.j, 0);
   for (int c = 0; c <= 3; ++c) EXPECT_EQ(game.cell(0, c), 1);
-  tetrinoMoveLeft(game.get(), &fig);  // в стену — без движения
+  tetrinoMoveLeft(game.get(), &fig);
   EXPECT_EQ(fig.j, 0);
   for (int c = 0; c <= 3; ++c) EXPECT_EQ(game.cell(0, c), 1);
 }
@@ -162,7 +162,7 @@ TEST(LegacyTetrisTest, MoveRightStopsAtWall) {
   for (int step = 0; step < 3; ++step) tetrinoMoveRight(game.get(), &fig);
   EXPECT_EQ(fig.j, 6);
   for (int c = 6; c <= 9; ++c) EXPECT_EQ(game.cell(0, c), 1);
-  tetrinoMoveRight(game.get(), &fig);  // в стену — без движения
+  tetrinoMoveRight(game.get(), &fig);
   EXPECT_EQ(fig.j, 6);
   for (int c = 6; c <= 9; ++c) EXPECT_EQ(game.cell(0, c), 1);
 }
@@ -171,7 +171,7 @@ TEST(LegacyTetrisTest, RotateTurnsBarVertical) {
   CGame game;
   Tetrino fig;
   spawnTetrino(game.get(), BAR, &fig);
-  tetrinoMoveDown(game.get(), &fig);  // fig.i=0: место для поворота есть
+  tetrinoMoveDown(game.get(), &fig);
   tetrinoRotate(game.get(), &fig);
   for (int r = 0; r <= 3; ++r) EXPECT_EQ(game.cell(r, 5), 1);
   EXPECT_EQ(game.CountCells(), 4);
@@ -180,7 +180,7 @@ TEST(LegacyTetrisTest, RotateTurnsBarVertical) {
 TEST(LegacyTetrisTest, RotateBlockedAboveField) {
   CGame game;
   Tetrino fig;
-  spawnTetrino(game.get(), BAR, &fig);  // fig.i=-1: повёрнутый BAR не влезет
+  spawnTetrino(game.get(), BAR, &fig);
   tetrinoRotate(game.get(), &fig);
   for (int c = 3; c <= 6; ++c) EXPECT_EQ(game.cell(0, c), 1);
   EXPECT_EQ(game.CountCells(), 4);
@@ -290,7 +290,7 @@ TEST(TetrisModelTest, SpawnFailsWhenTopIsOccupied) {
   for (int c = 3; c <= 6; ++c) initial[0][c] = 1;
   TetrisModel model(initial);
   EXPECT_FALSE(model.Spawn(TetrominoType::kBar));
-  EXPECT_EQ(CountCells(model.field()), 4);  // поле не тронуто
+  EXPECT_EQ(CountCells(model.field()), 4);
 }
 
 TEST(TetrisModelTest, SpawnRandomPlacesFourCells) {
@@ -568,6 +568,49 @@ TEST(TetrisGameTest, BlockedSpawnEndsGame) {
   game.updateCurrentState();
   EXPECT_EQ(game.state(), GameState::kGameOver);
   EXPECT_TRUE(game.finished());
+}
+
+TetrisGame::FigureGenerator SeqGenerator(std::vector<TetrominoType> seq) {
+  auto idx = std::make_shared<std::size_t>(0);
+  auto items = std::make_shared<std::vector<TetrominoType>>(std::move(seq));
+  return [idx, items] {
+    std::size_t k = *idx < items->size() ? *idx : items->size() - 1;
+    ++*idx;
+    return TetrominoFactory::Create((*items)[k]);
+  };
+}
+
+int CountNextCells(const GameInfo_t& info) {
+  int count = 0;
+  for (int r = 0; r < kH; ++r) {
+    for (int c = 0; c < kW; ++c) count += info.next[r][c] != 0 ? 1 : 0;
+  }
+  return count;
+}
+
+TEST(TetrisGameTest, NextPreviewShowsUpcomingPiece) {
+  TetrisGame game(SeqGenerator({TetrominoType::kBar}));
+  GameInfo_t info = game.updateCurrentState();
+  EXPECT_EQ(CountNextCells(info), 4);
+}
+
+TEST(TetrisGameTest, NextPreviewAdvancesOnSpawn) {
+  TetrisGame game(SeqGenerator({TetrominoType::kBar, TetrominoType::kCube}));
+
+  GameInfo_t info = game.updateCurrentState();
+  int bar[kH][kW];
+  for (int r = 0; r < kH; ++r)
+    for (int c = 0; c < kW; ++c) bar[r][c] = info.next[r][c];
+
+  game.userInput(Start, false);
+  info = game.updateCurrentState();
+
+  bool differs = false;
+  for (int r = 0; r < kH; ++r)
+    for (int c = 0; c < kW; ++c)
+      if (info.next[r][c] != bar[r][c]) differs = true;
+  EXPECT_TRUE(differs);
+  EXPECT_EQ(CountNextCells(info), 4);
 }
 
 }  // namespace

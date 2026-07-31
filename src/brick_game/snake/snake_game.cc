@@ -6,7 +6,6 @@ namespace s21 {
 
 namespace {
 
-// Таблица переходов FSM змейки (подмножество GameState).
 Fsm<SnakeEvent> MakeSnakeFsm() {
   using S = GameState;
   using E = SnakeEvent;
@@ -37,7 +36,7 @@ void SnakeGame::userInput(UserAction_t action, bool) {
       fsm_.Dispatch(SnakeEvent::kCrashed);
       break;
     case Action:
-      accelerated_ = true;  // ускорение: ближайший тик отдаст speed/2
+      accelerated_ = true;
       break;
     case Left:
       HandleTurn(-1, 0);
@@ -58,8 +57,12 @@ void SnakeGame::userInput(UserAction_t action, bool) {
 
 GameInfo_t SnakeGame::updateCurrentState() {
   Tick();
-  return MakeInfo();
+  GameInfo_t info = BuildInfo();
+  accelerated_ = false;
+  return info;
 }
+
+GameInfo_t SnakeGame::render() { return BuildInfo(); }
 
 GameState SnakeGame::state() const { return fsm_.state(); }
 
@@ -70,8 +73,6 @@ bool SnakeGame::finished() const {
 
 void SnakeGame::HandleTurn(int dx, int dy) {
   if (fsm_.state() != GameState::kMoving) return;
-  // Разворот на 180° запрещён — относительно последнего выполненного
-  // хода, а не последнего ввода (два ввода за тик не дают разворота).
   if (dx == -moved_dx_ && dy == -moved_dy_) return;
   dx_ = dx;
   dy_ = dy;
@@ -91,7 +92,7 @@ void SnakeGame::Tick() {
   }
 }
 
-GameInfo_t SnakeGame::MakeInfo() {
+GameInfo_t SnakeGame::BuildInfo() {
   model_.Rasterize(field_.data());
   GameInfo_t info{};
   info.field = field_.data();
@@ -101,7 +102,6 @@ GameInfo_t SnakeGame::MakeInfo() {
   info.level = SnakeModel::LevelFor(info.score);
   const int base_speed = SnakeModel::SpeedFor(info.level);
   info.speed = accelerated_ ? base_speed / 2 : base_speed;
-  accelerated_ = false;
   info.pause = fsm_.state() == GameState::kPause ? 1 : 0;
   return info;
 }

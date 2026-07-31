@@ -29,6 +29,20 @@ void WebFlattenField(int** field, int* out) {
       out[r * FIELD_WIDTH + c] = field[r][c];
 }
 
+namespace {
+
+void CacheFrame(const GameInfo_t& info) {
+  WebFlattenField(info.field, g_field);
+  if (info.next != nullptr) WebFlattenField(info.next, g_next);
+  g_score = info.score;
+  if (info.score > g_record) g_record = info.score;
+  g_level = info.level;
+  g_speed = info.speed;
+  g_pause = info.pause;
+}
+
+}  // namespace
+
 extern "C" {
 
 WEB_EXPORT void web_start(int game) {
@@ -39,16 +53,9 @@ WEB_EXPORT void web_input(int action, int hold) {
   userInput(static_cast<UserAction_t>(action), hold != 0);
 }
 
-WEB_EXPORT void web_tick(void) {
-  GameInfo_t info = updateCurrentState();
-  WebFlattenField(info.field, g_field);
-  if (info.next != nullptr) WebFlattenField(info.next, g_next);
-  g_score = info.score;
-  if (info.score > g_record) g_record = info.score;
-  g_level = info.level;
-  g_speed = info.speed;
-  g_pause = info.pause;
-}
+WEB_EXPORT void web_tick(void) { CacheFrame(updateCurrentState()); }
+
+WEB_EXPORT void web_render(void) { CacheFrame(renderCurrentState()); }
 
 WEB_EXPORT int* web_field_ptr(void) { return g_field; }
 WEB_EXPORT int* web_next_ptr(void) { return g_next; }

@@ -1,28 +1,23 @@
-// Dumb web-View поверх WASM-моста (web_bridge). Логики игры здесь нет: цикл на
-// requestAnimationFrame тикает мост по его же speed, клавиши уходят в web_input,
-// поле читается из плоского буфера через Module.getValue и рисуется на canvas.
 (function () {
   'use strict';
 
   var W = 10;
   var H = 20;
   var CELLS = W * H;
-  var CELL = 24; // px
+  var CELL = 24;
 
   var TETRIS = 0;
-  var SNAKE = 1; // enum CurrentGame
+  var SNAKE = 1;
 
-  // enum UserAction_t (порядок из interface.h)
   var A = {
     Start: 0, Pause: 1, Terminate: 2,
     Left: 3, Right: 4, Up: 5, Down: 6, Action: 7
   };
-  // enum GameState — из конечных нужны только эти
+
   var GAME_OVER = 6;
   var WIN = 7;
 
-  // 0 — пусто, 1 — блок/тело, 2 — яблоко
-  var COLORS = ['#0d1117', '#39d353', '#ff4d4d'];
+  var COLORS = ['#0d1117', '#332de8', '#ff4d4d'];
 
   var canvas = document.getElementById('field');
   var ctx = canvas.getContext('2d');
@@ -30,6 +25,8 @@
   var elHigh = document.getElementById('high');
   var elLevel = document.getElementById('level');
   var elStatus = document.getElementById('status');
+  var nextCanvas = document.getElementById('next');
+  var nextCtx = nextCanvas ? nextCanvas.getContext('2d') : null;
 
   var Mod = null;
   var api = null;
@@ -54,7 +51,9 @@
       start: Module.cwrap('web_start', null, ['number']),
       input: Module.cwrap('web_input', null, ['number', 'number']),
       tick: Module.cwrap('web_tick', null, []),
+      render: Module.cwrap('web_render', null, []),
       fieldPtr: Module.cwrap('web_field_ptr', 'number', []),
+      nextPtr: Module.cwrap('web_next_ptr', 'number', []),
       score: Module.cwrap('web_score', 'number', []),
       high: Module.cwrap('web_high_score', 'number', []),
       level: Module.cwrap('web_level', 'number', []),
@@ -86,6 +85,21 @@
     elScore.textContent = api.score();
     elHigh.textContent = api.high();
     elLevel.textContent = api.level();
+    drawNext();
+  }
+
+  function drawNext() {
+    if (!nextCtx) return;
+    var ptr = api.nextPtr();
+    nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+    for (var r = 0; r < 4; r++) {
+      for (var c = 0; c < 4; c++) {
+        var v = Mod.getValue(ptr + (r * W + c) * 4, 'i32');
+        if (!v) continue;
+        nextCtx.fillStyle = COLORS[v] || COLORS[1];
+        nextCtx.fillRect(c * 20 + 1, r * 20 + 1, 18, 18);
+      }
+    }
   }
 
   function persistHi() {
@@ -102,7 +116,7 @@
     if (!running) return;
     if (!lastTs) lastTs = ts;
     var interval = api.speed();
-    if (interval < 30) interval = 30; // защита от нулевой/крошечной задержки
+    if (interval < 30) interval = 30;
     if (ts - lastTs >= interval) {
       lastTs = ts;
       api.tick();
@@ -122,10 +136,10 @@
   function startGame(game) {
     stopLoop();
     current = game;
-    api.start(game); // selectGame — чистое состояние
-    api.setHigh(loadHi(game)); // рекорд из localStorage
+    api.start(game);
+    api.setHigh(loadHi(game));
     api.input(A.Start, 0);
-    api.tick(); // первый кадр
+    api.tick();
     running = true;
     lastTs = 0;
     setStatus(label(game));
@@ -140,15 +154,18 @@
 
   function onKey(e) {
     if (!api) return;
-    if (e.key === 'Enter') { // старт/рестарт текущей игры
+    if (e.key === 'Enter') {
       e.preventDefault();
       startGame(current);
       return;
     }
     var action = KEYS[e.key];
+    if (e.key === 'ArrowUp' && current === TETRIS) action = A.Action;
     if (action === undefined) return;
     e.preventDefault();
-    api.input(action, 0); // ввод не двигает игру — перерисуется на ближайшем тике
+    api.input(action, 0);
+    api.render();
+    draw();
     if (action === A.Pause) {
       setStatus(api.paused() ? 'Пауза' : label(current));
     }
@@ -162,7 +179,6 @@
       .addEventListener('click', function () { startGame(SNAKE); });
     document.addEventListener('keydown', onKey);
 
-    // Превью пустого/стартового поля до выбора игры.
     api.start(current);
     api.setHigh(loadHi(current));
     api.tick();
