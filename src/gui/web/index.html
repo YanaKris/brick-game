@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BrickGame — Тетрис и Змейка</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #010409;
+      color: #c9d1d9;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+    .app { text-align: center; }
+    h1 { font-size: 1.4rem; letter-spacing: .1em; margin: 0 0 1rem; }
+    .game { display: flex; gap: 1.25rem; align-items: flex-start; }
+    canvas {
+      background: #0d1117;
+      border: 2px solid #30363d;
+      border-radius: 6px;
+      image-rendering: pixelated;
+    }
+    .panel { width: 190px; text-align: left; }
+    .controls { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    .controls button {
+      flex: 1;
+      padding: .5rem;
+      font: inherit;
+      color: #c9d1d9;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .controls button:hover { background: #30363d; }
+    .next-box { margin-bottom: 1rem; }
+    .next-label { display: block; color: #8b949e; font-size: .85rem; margin-bottom: .35rem; }
+    #next { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; }
+    .stats { display: grid; grid-template-columns: auto auto; gap: .25rem .75rem; margin: 0 0 1rem; }
+    .stats dt { color: #8b949e; }
+    .stats dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .status { min-height: 1.4em; font-weight: 600; color: #58a6ff; margin: 0 0 1rem; }
+    .help { list-style: none; padding: 0; margin: 0; font-size: .85rem; color: #8b949e; }
+    .help li { margin: .2rem 0; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>BRICKGAME</h1>
+    <div class="game">
+      <canvas id="field" width="240" height="480"></canvas>
+      <aside class="panel">
+        <div class="controls">
+          <button id="btn-tetris" type="button">Тетрис</button>
+          <button id="btn-snake" type="button">Змейка</button>
+        </div>
+        <div class="next-box">
+          <span class="next-label">Следующая</span>
+          <canvas id="next" width="80" height="80"></canvas>
+        </div>
+        <dl class="stats">
+          <dt>Счёт</dt><dd id="score">0</dd>
+          <dt>Рекорд</dt><dd id="high">0</dd>
+          <dt>Уровень</dt><dd id="level">0</dd>
+        </dl>
+        <p id="status" class="status"></p>
+        <ul class="help">
+          <li>← → — движение</li>
+          <li>↑ — поворот, ↓ — вниз</li>
+          <li>Пробел — действие</li>
+          <li>P — пауза</li>
+          <li>Enter — старт/рестарт</li>
+          <li>Esc — выход</li>
+        </ul>
+      </aside>
+    </div>
+  </main>
+  <script src="brickgame.js"></script>
+  <script src="web_view.js"></script>
+</body>
+</html>
